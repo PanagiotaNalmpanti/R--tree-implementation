@@ -13,15 +13,16 @@ def createBlocks(record_data):
     i = 0
 
     for _ in record_data:
-        print(csize+sys.getsizeof(record_data[i]))
         if csize+sys.getsizeof(record_data[i]) <= block_size:
-           csize = csize-sys.getsizeof(record_data[i])
+           csize = csize+sys.getsizeof(record_data[i])
            listOfRecords.append(record_data[i])
            i += 1
         else:
             csize = 0
             listOfBlocks.append(listOfRecords)
-    print(listOfBlocks)
+            csize = csize+sys.getsizeof(record_data[i])
+            listOfRecords.append(record_data[i])
+            i += 1
     # print(sys.getsizeof(record_data)) # 2.05 blocks
 
 
