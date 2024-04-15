@@ -2,30 +2,33 @@ import xml.etree.ElementTree as ET
 import xml.dom.minidom as minidom
 import sys
 import math
+
 block_size = 32 * 1024  # 32KB
 
+
 def createBlocks(record_data):
-    block0 = (len(record_data), math.ceil(sys.getsizeof(record_data) / block_size)+1)
+    block0 = (len(record_data), math.ceil(sys.getsizeof(record_data) / block_size) + 1)
     listOfRecords = []
     listOfBlocks = []
     listOfBlocks.append(block0)
     csize = 0
-    i = 0
 
-    for _ in record_data:
-        if csize+sys.getsizeof(record_data[i]) <= block_size:
-           csize = csize+sys.getsizeof(record_data[i])
-           listOfRecords.append(record_data[i])
-           i += 1
+    for record in record_data:
+        record_size = sys.getsizeof(record)
+        if csize + record_size <= block_size:
+            csize = csize + record_size
+            listOfRecords.append(record)
         else:
             csize = 0
             listOfBlocks.append(listOfRecords)
-            csize = csize+sys.getsizeof(record_data[i])
-            listOfRecords.append(record_data[i])
-            i += 1
-    # print(sys.getsizeof(record_data)) # 2.05 blocks
+            listOfRecords = []
+            csize = csize + record_size
+            listOfRecords.append(record)
 
-
+    block0 = (len(record_data), len(listOfBlocks))
+    listOfBlocks[0] = block0
+    print(block0)
+    print(len(listOfBlocks[20]))
 
 
 # parse the .osm XML file
@@ -46,5 +49,5 @@ for element in root:
 
         record_data.append([id, name, (lat, lon)])
 
-# print(record_data)
+#print(record_data)
 createBlocks(record_data)
