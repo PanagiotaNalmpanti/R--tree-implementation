@@ -28,6 +28,8 @@ class Node:
         cls.min_entries = math.floor(number/2.0)
 
     def getLevel(self):
-
-        return level
+        if self.parent is not None:
+            return self.parent.getLevel() + 1
+        else:
+            return 0
 
