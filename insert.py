@@ -1,6 +1,8 @@
 import xml.etree.ElementTree as ET
 from Node import Node
 from Entry import Entry, LeafEntry, Rectangle
+
+
 def read_blocks_from_datafile(file):
     tree = ET.parse(file)
     root = tree.getroot()
@@ -33,16 +35,19 @@ def insert_one_by_one(blocks, num_of_entries):
     for block in blocks:
         for record in block:
             r = LeafEntry(record)
-            rtree = insert_to_tree(rtree, r)
+            insert_to_tree(rtree, r)
     return rtree
 
+
 def insert_to_tree(rtree, r):
-    N = chooseSubtree()
+    N = ChooseSubtree()
     node_level = N.getLevel()
     if len(N.entries) < Node.max_entries:
         N.entries.append(r)
     else:
         n
+
+def ChooseSubtree():
 
 # read the records from datafile
 read_blocks = read_blocks_from_datafile("datafile3000.xml")
