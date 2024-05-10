@@ -27,4 +27,7 @@ class Node:
         cls.max_entries = number
         cls.min_entries = math.floor(number/2.0)
 
+    def getLevel(self):
+
+        return level
 

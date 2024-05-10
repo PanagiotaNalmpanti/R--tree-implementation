@@ -1,10 +1,8 @@
 import xml.etree.ElementTree as ET
-import xml.dom.minidom as minidom
 import sys
 import math
 
 block_size = 32 * 1024  # 32KB
-
 
 def createBlocks(record_data):
     block0 = (len(record_data), math.ceil(sys.getsizeof(record_data) / block_size) + 1)
@@ -52,7 +50,7 @@ def create_xml(blocks, records, xml):
     tree = ET.ElementTree(Blocks)
 
     # write the tree into an XML file
-    tree.write("datafile.xml", encoding='utf-8', xml_declaration=True)
+    tree.write("datafile3000.xml", encoding='utf-8', xml_declaration=True)
 
 
 # parse the .osm XML file
@@ -62,18 +60,24 @@ root = tree.getroot()
 # list to store the points only (node data)
 record_data = []
 tags = {}  # dictionary
+count = 0 # for testing only
 for element in root:
     if element.tag == "node":
-        id = element.attrib["id"]
-        lat = element.attrib["lat"]
-        lon = element.attrib["lon"]
-        for tag in element.findall("tag"):
-            tags[tag.attrib["k"]] = tag.attrib["v"]
-        name = tags.get("name", "unknown")
+        if count<3000: # for testing only
+            count +=1 # for testing only
+            id = element.attrib["id"]
+            lat = element.attrib["lat"]
+            lon = element.attrib["lon"]
+            for tag in element.findall("tag"):
+                tags[tag.attrib["k"]] = tag.attrib["v"]
+            name = tags.get("name", "unknown")
 
-        # coordinates = (lat,lon)
-        record_data.append([id, name, lat, lon])
+            # coordinates = (lat,lon)
+            record_data.append([id, name, lat, lon]) # here you can add more dimensions
+
+        else: # for testing only
+            break # for testing only
 
 # print(record_data)
 listOfBlocks = createBlocks(record_data)
-create_xml(listOfBlocks, len(record_data), "datafile.xml")
+create_xml(listOfBlocks, len(record_data), "datafile3000.xml")
