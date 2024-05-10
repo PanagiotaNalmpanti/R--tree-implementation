@@ -40,14 +40,16 @@ def insert_one_by_one(blocks, num_of_entries):
 
 
 def insert_to_tree(rtree, r):
-    N = ChooseSubtree()
-    node_level = N.getLevel()
+    N = ChooseSubtree(rtree, r)
+    leaf_level = N.getLevel()
+    # If N can take another entry
     if len(N.entries) < Node.max_entries:
         N.entries.append(r)
     else:
-        n
+        N.entries.append(r)
+        #treatment
 
-def ChooseSubtree():
+def ChooseSubtree(rtree, r):
 
 # read the records from datafile
 read_blocks = read_blocks_from_datafile("datafile3000.xml")
