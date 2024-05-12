@@ -33,3 +33,5 @@ class Node:
         else:
             return 0
 
+    def set_entries(self, entries):
+        self.entries = entries

@@ -1,3 +1,6 @@
+import math
+
+
 class Rectangle:
     # find MBR
     def __init__(self, points):
@@ -20,6 +23,11 @@ class Rectangle:
             b = self.bottom_left[i]
             Cpoint.append((a + b) / 2)
         return Cpoint
+
+    def euclidean_distance(self, entry_point):
+        N_center = self.center()
+        sum_of_squares = sum((N_center[i] - entry_point[i]) ** 2 for i in range(len(N_center)))
+        return math.sqrt(sum_of_squares)
 
     def calculate_overlap_enlargement(self, r, index, N):
         # create new rectangle including the points of the current rectangle and the point of the new record

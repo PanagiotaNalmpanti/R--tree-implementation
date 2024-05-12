@@ -1,3 +1,4 @@
+import math
 import xml.etree.ElementTree as ET
 from Node import Node
 from Entry import Entry, LeafEntry, Rectangle
@@ -41,13 +42,41 @@ def insert_one_by_one(blocks, num_of_entries):
 
 def insert_to_tree(rtree, r):
     N = ChooseSubtree(rtree, r)
-    leaf_level = N.getLevel()
+    calls = 0 # might need to be a parameter
     # If N can take another entry
     if len(N.entries) < Node.max_entries:
         N.entries.append(r)
     else:
         N.entries.append(r)
-        #treatment
+        overflowTreatment(N, rtree, r, calls)
+        calls += 1
+
+def overflowTreatment(N, rtree, record, calls) :
+    if N.getLevel() != 0 and calls == 0 :
+        ReInsert(N)
+    else :
+        Split()
+
+def ReInsert(N) :
+    node_entries = N.entries
+    distances = []
+    for entry in node_entries :
+        distance = N.euclidean_distance(entry.point)
+        distances.append((entry, distance))
+    distances.sort(key=lambda x: x[1], reversed=True) # RI2
+
+    p = math.floor(len(node_entries) * 0.5) # 50% of the entries that exist in node N
+    entries_left = node_entries[p:] # remove the first p entries from N
+    N.set_entries(entries_left) # set the new entries of N
+    for entry in N.entries :
+        entry.set_rectangle(entry.point) # adjusting the bounding rectangle of N, by adjusting its children's rectangles
+
+    for entry, _ in distances: # starting from the maximum distance ( = far reinsert)
+        insert_to_tree(rtree, entry)
+
+
+def Split() :
+
 
 def ChooseSubtree(rtree, r):
     N = rtree[0]
