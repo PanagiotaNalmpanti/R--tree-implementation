@@ -50,6 +50,47 @@ def insert_to_tree(rtree, r):
         #treatment
 
 def ChooseSubtree(rtree, r):
+    N = rtree[0]
+
+    # if root is empty return it
+    if len(N.entries) == 0:
+        return N
+
+    # while node N is not a LeafEntry instance
+    while not isinstance(N.entries[0], LeafEntry):
+        # check if N points to leafs
+        if isinstance(N.entries[0].child.entries[0], LeafEntry):
+            # determine minimum overlap cost
+            min_overlap_cost = float('inf')
+            min_area_cost = float('inf')
+            chosen = None
+            # for every entry in node
+            for i, entry in enumerate(N.entries):
+                overlap_enlargement = entry.rectangle.calculate_overlap_enlargement(r, i, N)
+                area_enlargement = entry.rectangle.calculate_area_enlargement(r)
+
+                if overlap_enlargement < min_overlap_cost or (overlap_enlargement == min_overlap_cost and area_enlargement < min_area_cost):
+                    min_overlap_cost = overlap_enlargement
+                    min_area_cost = area_enlargement
+                    chosen = entry
+
+        # children of N is not leafs
+        else:
+            min_overlap_cost = float('inf')
+            min_area_cost = float('inf')
+            chosen = None
+
+            for entry in N.entries:
+                area_enlargement = entry.rectangle.calculate_area_enlargement(r)
+                new_area = area_enlargement + entry.rectangle.calculate_area()
+
+                if area_enlargement < min_area_cost or (area_enlargement == min_area_cost and new_area < min_area):
+                    min_area_cost = area_enlargement
+                    min_area = new_area
+                    chosen = entry
+        N = chosen.child
+    return N # This is the suitable leaf node for the new leaf entry = record to be inserted
+
 
 # read the records from datafile
 read_blocks = read_blocks_from_datafile("datafile3000.xml")
