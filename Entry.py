@@ -39,10 +39,10 @@ class Rectangle:
         for i, entry in enumerate(N.entries):
             if i != index:
                 # value represents the contribution of each entry to the enlargement of the new rectangle
-                enlargement += entry.rectangle.calculate_value(new_rectangle)
+                enlargement += entry.rectangle.calculate_overlap_value(new_rectangle)
         return enlargement
 
-    def calculate_value(self, other_rectangle):
+    def calculate_overlap_value(self, other_rectangle):
         overlap_value = 1
 
         for i in range(len(self.bottom_left_point)):

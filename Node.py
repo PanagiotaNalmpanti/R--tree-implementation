@@ -22,16 +22,24 @@ class Node:
         self.parent = parent
         self.parent_slot = parent_slot
 
-    @classmethod
-    def set_max_entries(cls, number):
-        cls.max_entries = number
-        cls.min_entries = math.floor(number/2.0)
-
     def getLevel(self):
         if self.parent is not None:
             return self.parent.getLevel() + 1
         else:
             return 0
+
+    @classmethod
+    def set_max_entries(cls, number):
+        cls.max_entries = number
+        cls.min_entries = math.floor(number/2.0)
+
+    @classmethod
+    def set_overflow_treatment_level(cls, leaf_level):
+        cls.overflow_treatment_level = leaf_level
+
+    @classmethod
+    def increase_overflow_treatment_level(cls):
+        cls.overflow_treatment_level += 1
 
     def set_entries(self, entries):
         self.entries = entries
