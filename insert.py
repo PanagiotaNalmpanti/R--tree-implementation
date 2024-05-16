@@ -41,15 +41,16 @@ def insert_one_by_one(blocks, num_of_entries):
 
 def insert_to_tree(rtree, r):
     N = ChooseSubtree(rtree, r)
+
     # If N can take another entry
     if len(N.entries) < Node.max_entries:
         N.entries.append(r)
+        adjust_rectangles(N)
     else:
         N.entries.append(r)
         # treatment
-        calls = 0  # might need to be a parameter
-        overflowTreatment(N, rtree, r, calls)
-        calls += 1
+        level = N.getLevel()
+        overflowTreatment(N, rtree, level)
 
 
 def ChooseSubtree(rtree, r):
@@ -95,17 +96,191 @@ def ChooseSubtree(rtree, r):
         N = chosen.child
     return N  # This is the suitable leaf node for the new leaf entry = record to be inserted
 
-def overflowTreatment(N, rtree, record, calls):
-    if N.getLevel() != 0 and calls == 0:
-        ReInsert(N)
+
+def overflowTreatment(N, rtree, level):
+    if level == 0:
+        # Split root
+        entry_group1, entry_group2 = Split(N, Node.min_entries)
+
+        new_node1 = Node(entry_group1)
+        new_node2 = Node(entry_group2)
+
+        # if the root has leaf entries
+        if isinstance(entry_group1[0], LeafEntry):
+
+            rect1 = Rectangle([entry.point for entry in entry_group1])
+            rect2 = Rectangle([entry.point for entry in entry_group2])
+            root_entry1 = Entry(rect1, new_node1)
+            root_entry2 = Entry(rect2, new_node2)
+
+            # updates
+            new_root = Node([root_entry1, root_entry2])
+            new_node1.set_parent(new_root, 0)
+            new_node2. set_parent(new_root, 1)
+
+        else:
+
+            rect1_points = []
+            for entry in entry_group1:
+                rect1_points.append(entry.rectangle.top_right_point)
+                rect1_points.append(entry.rectangle.bottom_left_point)
+            rect1 = Rectangle(rect1_points)
+            root_entry1 = Entry(rect1, new_node1)
+
+            rect2_points = []
+            for entry in entry_group2:
+                rect2_points.append(entry.rectangle.top_right_point)
+                rect2_points.append(entry.rectangle.bottom_left_point)
+            rect2 = Rectangle(rect2_points)
+            root_entry2 = Entry(rect2, new_node2)
+
+            new_root = Node([root_entry1, root_entry2])
+            new_node1.set_parent(new_root, 0)
+            new_node2.set_parent(new_root, 1)
+
+            # set the new nodes as parent of the children that were assigned to each of them
+            for i, entry in enumerate(new_node1.entries):
+                entry.child.set_parent(new_node1, i)
+            for i, entry in enumerate(new_node2.entries):
+                entry.child.set_parent(new_node2, i)
+
+        rtree.remove(N)
+        rtree.insert(0, new_root)
+        rtree.insert(1, new_node1)
+        rtree.insert(2, new_node2)
+
+    elif level == Node.overflow_treatment_level:
+        # ReInsert
+        Node.increase_overflow_treatment_level()
+        ReInsert(rtree, N)
     else:
-        Split(N, Node.min_entries)
+        # Split node
+        entry_group1, entry_group2 = Split(N, Node.min_entries)
+        new_node1 = Node(entry_group1)
+        new_node2 = Node(entry_group2)
+
+        if isinstance(entry_group1[0], LeafEntry):
+            # Split leaf
+            rect1 = Rectangle([entry.point for entry in entry_group1])
+            internal_entry1 = Entry(rect1, new_node1)
+            rect2 = Rectangle([entry.point for entry in entry_group2])
+            internal_entry2 = Entry(rect2, new_node2)
+
+            N.parent.entries.remove(N.parent.entries[N.parent_slot])
+            N.parent.entries.insert(N.parent_slot, internal_entry1)
+            N.parent.entries.insert(N.parent_slot + 1, internal_entry2)
+
+            new_node1.set_parent(N.parent, N.parent.entries.index(internal_entry1))
+            new_node2.set_parent(N.parent, N.parent.entries.index(internal_entry2))
+
+            for i, entry in enumerate(N.parent.entries):
+                entry.child.set_parent_slot(i)
+
+            # replace the old with the new nodes
+            replace_index = rtree.index(N)
+            rtree.insert(replace_index, new_node1)
+            rtree.insert(replace_index + 1, new_node2)
+            rtree.remove(N)
+
+            # check if the parent has overflown
+            if len(N.parent.entries) > Node.max_entries:
+                overflowTreatment(N.parent, rtree, level-1)
+            else:
+                adjust_rectangles(N.parent)
+
+        else:
+            # Split internal
+            rect1_points = []
+            for entry in entry_group1:
+                rect1_points.append(entry.rectangle.top_right_point)
+                rect1_points.append(entry.rectangle.bottom_left_point)
+            rect1 = Rectangle(rect1_points)
+            internal_entry1 = Entry(rect1, new_node1)
+
+            rect2_points = []
+            for entry in entry_group2:
+                rect2_points.append(entry.rectangle.top_right_point)
+                rect2_points.append(entry.rectangle.bottom_left_point)
+            rect2 = Rectangle(rect2_points)
+            internal_entry2 = Entry(rect2, new_node2)
+
+            N.parent.entries.remove(N.parent.entries[N.parent_slot])
+            N.parent.entries.insert(N.parent_slot, internal_entry1)
+            N.parent.entries.insert(N.parent_slot + 1, internal_entry2)
+
+            new_node1.set_parent(N.parent, N.parent.entries.index(internal_entry1))
+            new_node2.set_parent(N.parent, N.parent.entries.index(internal_entry2))
+
+            # update parent slot for all children of the parent node that was expanded
+            for i, entry in enumerate(N.parent.entries):
+                entry.child.set_parent_slot(i)
+
+            # update parent slot for all children of the new nodes
+            for i, entry in enumerate(new_node1.entries):
+                entry.child.set_parent(new_node1, i)
+            for i, entry in enumerate(new_node2.entries):
+                entry.child.set_parent(new_node2, i)
+
+            # replace the old node with the new nodes
+            replace_index = rtree(N)
+            rtree.insert(replace_index, new_node1)
+            rtree.insert(replace_index + 1, new_node2)
+            rtree.remove(N)
+
+            # check if the parent has overflown
+            if len(N.parent.entries) > Node.max_entries:
+                overflowTreatment(new_node1.parent, rtree, level-1)
+            else:
+                adjust_rectangles(new_node1.parent)
 
 
 def Split(N, min_entries):
     split_axis = ChooseSplitAxis(N.entries, min_entries)
     group1, group2 = ChooseSplitIndex(N.entries, split_axis, min_entries)
     return group1, group2
+
+
+def ReInsert(rtree, N):
+    distances = []
+    for entry in N.entries:
+        distance = N.rectangle.euclidean_distance(entry.point)
+        distances.append((entry, distance))
+    distances.sort(key=lambda x: x[1], reversed=True)  # RI2
+
+    p = int(round(0.3 * Node.max_entries))  # 30% of the entries that exist in node N
+    for i in range(p):
+        # remove the first p entries
+        N.entries.remove(distances[i][0])
+
+    # adjust the BR of the node
+    adjust_rectangles(N)
+
+    # reinsert the removed entries
+    for i in range(p):
+        insert_to_tree(rtree, distances[i][0])
+
+
+def adjust_rectangles(N):
+    while N is not None and N.parent is not None:
+        # if node is a leaf
+        if isinstance(N.entries[0], LeafEntry):
+            # gather the points
+            new_points = []
+            for entry in N.entries:
+                new_points.append(entry.point)
+
+        else:
+            # gather the bounding points of all rectangles
+            new_points = []
+            for entry in N.entries:
+                new_points.append(entry.rectangle.bottom_left_point)
+                new_points.append(entry.rectangle.top_right_point)
+
+        # update the MBR of the parent entry
+        N.parent.entries[N.parent_slot].set_rectangle(new_points)
+
+        # move up to the parent node
+        N = N.parent
 
 
 def ChooseSplitAxis(entries, min_entries):
@@ -119,7 +294,7 @@ def ChooseSplitAxis(entries, min_entries):
             entries.sort(key=lambda entry: entry.point[axis])
 
             # loop through each possible split point, min_entries is the minimum number of entries required in each group after splitting
-            for i in range(min_entries, len(entries) - min_entries+1):
+            for i in range(min_entries, len(entries) - min_entries + 1):
                 # Create a rectangle from the points of the entries in each group
                 rect1 = Rectangle([entry.point for entry in entries[:i]])
                 rect2 = Rectangle([entry.point for entry in entries[i:]])
@@ -157,7 +332,7 @@ def ChooseSplitAxis(entries, min_entries):
                 min_margin_sum = smargin
                 split_axis = axis
 
-    return split_axis # optimal split axis that minimizes the sum of margins for the given entries
+    return split_axis  # optimal split axis that minimizes the sum of margins for the given entries
 
 
 def ChooseSplitIndex(entries, split_axis, min_entries):
@@ -166,15 +341,15 @@ def ChooseSplitIndex(entries, split_axis, min_entries):
     index = None
 
     # check if the node is a leaf
-    if isinstance(entries[0],LeafEntry):
+    if isinstance(entries[0], LeafEntry):
         entries.sort(key=lambda entry: entry.point[split_axis])
         for i in range(min_entries, len(entries) - min_entries + 1):
 
-            #Create rectangles for the two groups of entries using their points
+            # Create rectangles for the two groups of entries using their points
             rect1 = Rectangle([entry.point for entry in entries[:i]])
             rect2 = Rectangle([entry.point for entry in entries[i:]])
             overlap = rect1.calculate_overlap_value(rect2)
-            area_sum = rect1.calculate_area()+rect2.calculate_area()
+            area_sum = rect1.calculate_area() + rect2.calculate_area()
 
             if overlap < min_overlap_value or (overlap == min_overlap_value and area_sum < min_area_value):
                 min_overlap_value = overlap
@@ -209,23 +384,6 @@ def ChooseSplitIndex(entries, split_axis, min_entries):
     return entries[:chosen_index], entries[chosen_index:]
 
 
-def ReInsert(N):
-    node_entries = N.entries
-    distances = []
-    for entry in node_entries:
-        distance = N.euclidean_distance(entry.point)
-        distances.append((entry, distance))
-    distances.sort(key=lambda x: x[1], reversed=True)  # RI2
-
-    p = math.floor(len(node_entries) * 0.5)  # 50% of the entries that exist in node N
-    entries_left = node_entries[p:]  # remove the first p entries from N
-    N.set_entries(entries_left)  # set the new entries of N
-    for entry in N.entries:
-        entry.set_rectangle(
-            entry.point)  # adjusting the bounding rectangle of N, by adjusting its children's rectangles
-
-    for entry, _ in distances:  # starting from the maximum distance ( = far reinsert)
-        insert_to_tree(rtree, entry)
 
 
 

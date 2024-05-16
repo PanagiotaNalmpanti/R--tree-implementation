@@ -4,6 +4,7 @@ import math
 class Node:
     max_entries = 4  # M
     min_entries = math.floor(max_entries * 0.5)  # m = 50% of M
+    overflow_treatment_level = 1
 
     def __init__(self, entries=None, parent=None, parent_slot=None):
         if entries is None:
@@ -20,6 +21,9 @@ class Node:
 
     def set_parent(self, parent, parent_slot):
         self.parent = parent
+        self.parent_slot = parent_slot
+
+    def set_parent_slot(self, parent_slot):
         self.parent_slot = parent_slot
 
     def getLevel(self):
