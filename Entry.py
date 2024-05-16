@@ -1,4 +1,5 @@
 import math
+import xml.etree.ElementTree as ET
 
 
 class Rectangle:
@@ -45,10 +46,10 @@ class Rectangle:
     def calculate_overlap_value(self, other_rectangle):
         overlap_value = 1
 
-        for i in range(len(self.bottom_left_point)):
+        for i in range(len(self.bottom_left)):
             # Calculate the overlap along each dimension
-            overlap_extent = min(self.top_right_point[i], other_rectangle.top_right_point[i]) - max(
-                self.bottom_left_point[i], other_rectangle.bottom_left_point[i])
+            overlap_extent = min(self.top_right[i], other_rectangle.top_right[i]) - max(
+                self.bottom_left[i], other_rectangle.bottom_left[i])
 
             # If there's no overlap along any dimension, the overall overlap is 0
             if overlap_extent <= 0:
@@ -76,6 +77,21 @@ class Rectangle:
             area *= self.top_right[i] - self.bottom_left[i]
         return area
 
+    def calculate_margin(self):
+        margin = 0
+
+        for i in range(len(self.bottom_left)):
+            margin += self.top_right[i] - self.bottom_left[i]
+
+        return margin
+
+    def to_xml(self, parent):
+        rectangle_elem = ET.SubElement(parent, "Rectangle")
+        bottom_left_point_elem = ET.SubElement(rectangle_elem, "BottomLeftPoint")
+        top_right_point_elem = ET.SubElement(rectangle_elem, "TopRightPoint")
+        bottom_left_point_elem.text = " ".join(map(str, self.bottom_left))
+        top_right_point_elem.text = " ".join(map(str, self.top_right))
+
 
 class Entry:
     def __init__(self, rectangle, child):
@@ -83,10 +99,15 @@ class Entry:
         self.child = child
 
     def set_rectangle(self, points):
-        set.rectangle = Rectangle(points)
+        self.rectangle = Rectangle(points)
 
     def set_child(self, new_child):
-        set.child = new_child
+        self.child = new_child
+
+    def to_xml(self, parent, child_node_index):
+        entry_elem = ET.SubElement(parent, "Entry")
+        self.rectangle.to_xml(entry_elem)
+        ET.SubElement(entry_elem, "ChildNodeIndex").text = str(child_node_index)
 
 
 class LeafEntry:
@@ -95,3 +116,10 @@ class LeafEntry:
         # record_id is a list that contains the block id and the slot of the record.
         self.record_id = (record[0], record[1])
         self.point = record[2:]
+
+    def to_xml(self, parent):
+        leaf_entry_elem = ET.SubElement(parent, "LeafEntry")
+        record_id_elem = ET.SubElement(leaf_entry_elem, "RecordID")
+        record_id_elem.text = str(self.record_id[0]) + "," + str(self.record_id[1])
+        point_elem = ET.SubElement(leaf_entry_elem, "Point")
+        point_elem.text = " ".join(map(str, self.point))

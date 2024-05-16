@@ -122,15 +122,15 @@ def overflowTreatment(N, rtree, level):
 
             rect1_points = []
             for entry in entry_group1:
-                rect1_points.append(entry.rectangle.top_right_point)
-                rect1_points.append(entry.rectangle.bottom_left_point)
+                rect1_points.append(entry.rectangle.top_right)
+                rect1_points.append(entry.rectangle.bottom_left)
             rect1 = Rectangle(rect1_points)
             root_entry1 = Entry(rect1, new_node1)
 
             rect2_points = []
             for entry in entry_group2:
-                rect2_points.append(entry.rectangle.top_right_point)
-                rect2_points.append(entry.rectangle.bottom_left_point)
+                rect2_points.append(entry.rectangle.top_right)
+                rect2_points.append(entry.rectangle.bottom_left)
             rect2 = Rectangle(rect2_points)
             root_entry2 = Entry(rect2, new_node2)
 
@@ -192,15 +192,15 @@ def overflowTreatment(N, rtree, level):
             # Split internal
             rect1_points = []
             for entry in entry_group1:
-                rect1_points.append(entry.rectangle.top_right_point)
-                rect1_points.append(entry.rectangle.bottom_left_point)
+                rect1_points.append(entry.rectangle.top_right)
+                rect1_points.append(entry.rectangle.bottom_left)
             rect1 = Rectangle(rect1_points)
             internal_entry1 = Entry(rect1, new_node1)
 
             rect2_points = []
             for entry in entry_group2:
-                rect2_points.append(entry.rectangle.top_right_point)
-                rect2_points.append(entry.rectangle.bottom_left_point)
+                rect2_points.append(entry.rectangle.top_right)
+                rect2_points.append(entry.rectangle.bottom_left)
             rect2 = Rectangle(rect2_points)
             internal_entry2 = Entry(rect2, new_node2)
 
@@ -222,7 +222,7 @@ def overflowTreatment(N, rtree, level):
                 entry.child.set_parent(new_node2, i)
 
             # replace the old node with the new nodes
-            replace_index = rtree(N)
+            replace_index = rtree.index(N)
             rtree.insert(replace_index, new_node1)
             rtree.insert(replace_index + 1, new_node2)
             rtree.remove(N)
@@ -241,21 +241,31 @@ def Split(N, min_entries):
 
 
 def ReInsert(rtree, N):
+    # Calculate the bounding rectangle of the node N
+    points = []
+    for entry in N.entries:
+        points.append(entry.point)
+
+    bounding_rectangle = Rectangle(points)
+
+    # Calculate distances from the center of the bounding rectangle
     distances = []
     for entry in N.entries:
-        distance = N.rectangle.euclidean_distance(entry.point)
+        distance = bounding_rectangle.euclidean_distance(entry.point)
         distances.append((entry, distance))
-    distances.sort(key=lambda x: x[1], reversed=True)  # RI2
+
+    # Sort distances in decreasing order
+    distances.sort(key=lambda x: x[1], reverse=True)  # RI2
 
     p = int(round(0.3 * Node.max_entries))  # 30% of the entries that exist in node N
     for i in range(p):
-        # remove the first p entries
+        # Remove the first p entries
         N.entries.remove(distances[i][0])
 
-    # adjust the BR of the node
+    # Adjust the bounding rectangle of the node
     adjust_rectangles(N)
 
-    # reinsert the removed entries
+    # Reinsert the removed entries
     for i in range(p):
         insert_to_tree(rtree, distances[i][0])
 
@@ -273,8 +283,8 @@ def adjust_rectangles(N):
             # gather the bounding points of all rectangles
             new_points = []
             for entry in N.entries:
-                new_points.append(entry.rectangle.bottom_left_point)
-                new_points.append(entry.rectangle.top_right_point)
+                new_points.append(entry.rectangle.bottom_left)
+                new_points.append(entry.rectangle.top_right)
 
         # update the MBR of the parent entry
         N.parent.entries[N.parent_slot].set_rectangle(new_points)
@@ -307,22 +317,22 @@ def ChooseSplitAxis(entries, min_entries):
 
     else:
         # Loop through each axis based on the dimensionality of the bounding rectangles of the entries
-        for axis in range(len(entries[0].rectangle.bottom_left_point)):
-            entries.sort(key=lambda entry: entry.rectangle.bottom_left_point[axis])
+        for axis in range(len(entries[0].rectangle.bottom_left)):
+            entries.sort(key=lambda entry: entry.rectangle.bottom_left[axis])
 
             # Loop through each possible split point
             for i in range(min_entries, len(entries) - min_entries + 1):
                 # create a rectangle by combining the BR of the entries in each group
                 rect1_points = []
                 for entry in entries[:i]:
-                    rect1_points.append(entry.rectangle.bottom_left_point)
-                    rect1_points.append(entry.rectangle.top_right_point)
+                    rect1_points.append(entry.rectangle.bottom_left)
+                    rect1_points.append(entry.rectangle.top_right)
                 rect1 = Rectangle(rect1_points)
 
                 rect2_points = []
                 for entry in entries[i:]:
-                    rect2_points.append(entry.rectangle.bottom_left_point)
-                    rect2_points.append(entry.rectangle.top_right_point)
+                    rect2_points.append(entry.rectangle.bottom_left)
+                    rect2_points.append(entry.rectangle.top_right)
                 rect2 = Rectangle(rect2_points)
 
                 smargin += rect1.calculate_margin() + rect2.calculate_margin()
@@ -357,19 +367,19 @@ def ChooseSplitIndex(entries, split_axis, min_entries):
                 chosen_index = i
 
     else:
-        entries.sort(key=lambda entry: entry.rectangle.bottom_left_point[split_axis])
+        entries.sort(key=lambda entry: entry.rectangle.bottom_left[split_axis])
         for i in range(min_entries, len(entries) - min_entries + 1):
             # Create rectangles for the two groups of entries using the bottom-left and top-right points of their BRs
             rect1_points = []
             for entry in entries[:i]:
-                rect1_points.append(entry.rectangle.bottom_left_point)
-                rect1_points.append(entry.rectangle.top_right_point)
+                rect1_points.append(entry.rectangle.bottom_left)
+                rect1_points.append(entry.rectangle.top_right)
             rect1 = Rectangle(rect1_points)
 
             rect2_points = []
             for entry in entries[i:]:
-                rect2_points.append(entry.rectangle.bottom_left_point)
-                rect2_points.append(entry.rectangle.top_right_point)
+                rect2_points.append(entry.rectangle.bottom_left)
+                rect2_points.append(entry.rectangle.top_right)
             rect2 = Rectangle(rect2_points)
 
             overlap = rect1.calculate_overlap_value(rect2)
@@ -384,9 +394,40 @@ def ChooseSplitIndex(entries, split_axis, min_entries):
     return entries[:chosen_index], entries[chosen_index:]
 
 
+def build_xml(node_elem, node, nodes):
+    for entry in node.entries:
+        if isinstance(entry, Entry):
+            child_index = nodes.index(entry.child)
+            entry.to_xml(node_elem, child_index)
+        else:
+            entry.to_xml(node_elem)
+    if node.parent is not None:
+        parent_node_index = nodes.index(node.parent)
+        ET.SubElement(node_elem, "ParentNodeIndex").text = str(parent_node_index)
+        ET.SubElement(node_elem, "SlotInParent").text = str(node.parent_slot)
+
+
+def save_rtree_to_xml(tree, filename):
+    root_elem = ET.Element("Nodes", max_entries=str(Node.max_entries))
+
+    nodes = tree  # Assuming tree is a list of nodes
+    for node in nodes:
+        node_elem = ET.SubElement(root_elem, "Node")
+        build_xml(node_elem, node, nodes)
+
+    xml_tree = ET.ElementTree(root_elem)
+
+    # Save to the specified filename with 'utf-8' encoding and pretty formatting
+    xml_tree.write(filename, encoding="utf-8", xml_declaration=True)
+
+
+
 
 
 
 # read the records from datafile
-read_blocks = read_blocks_from_datafile("datafile3000.xml")
+read_blocks = read_blocks_from_datafile("datafile3000.xml") # testing
 rtree = insert_one_by_one(read_blocks, Node.max_entries)
+
+# save the tree to the indexfile
+save_rtree_to_xml(rtree, "indexfile3000.xml") # testing
