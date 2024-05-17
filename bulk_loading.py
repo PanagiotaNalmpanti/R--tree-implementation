@@ -91,7 +91,7 @@ def calculateMBR(block):
 
 
 def finalTree(nodes):
-    if len(nodes) <= max_entries: # we reached the root
+    if len(nodes) <= max_entries:  # we reached the root
         return nodes
     level = []  # list that contains the nodes of the current level
     for i in range(0, len(nodes), max_entries):
@@ -105,6 +105,32 @@ def finalTree(nodes):
     return finalTree(level)
 
 
+def rtree_xml(rtree):
+    root_element = ET.Element("R_Star_Tree")
+    for node in rtree:
+        root_element.append(build_xml(node))
+
+    tree = ET.ElementTree(root_element)
+    tree.write("bulk_loaded_tree.xml")
+
+
+def build_xml(node):
+    node_element = ET.Element("Node")
+    mbr_element = ET.SubElement(node_element, "MBR")
+    mbr_element.text = str(node[0])
+
+    if isinstance(node[1][0], list):
+        for record in node[1]:
+            record_element = ET.SubElement(node_element, "Record")
+            record_element.text = str(record)
+    else:
+        for child in node[1]:
+            child_element = build_xml(child)
+            node_element.append(child_element)
+    return node_element
+
+
 # read the records from datafile
 read_records = read_records_from_osm("datafile3000.xml")
 rtree = bulk_loading(read_records)
+rtree_xml(rtree)
