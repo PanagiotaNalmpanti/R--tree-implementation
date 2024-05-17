@@ -1,6 +1,7 @@
 import xml.etree.ElementTree as ET
 from Node import Node
 from Entry import Entry, LeafEntry, Rectangle
+import time
 
 
 def read_blocks_from_datafile(file):
@@ -116,7 +117,7 @@ def overflowTreatment(N, rtree, level):
             # updates
             new_root = Node([root_entry1, root_entry2])
             new_node1.set_parent(new_root, 0)
-            new_node2. set_parent(new_root, 1)
+            new_node2.set_parent(new_root, 1)
 
         else:
 
@@ -184,7 +185,7 @@ def overflowTreatment(N, rtree, level):
 
             # check if the parent has overflown
             if len(N.parent.entries) > Node.max_entries:
-                overflowTreatment(N.parent, rtree, level-1)
+                overflowTreatment(N.parent, rtree, level - 1)
             else:
                 adjust_rectangles(N.parent)
 
@@ -229,7 +230,7 @@ def overflowTreatment(N, rtree, level):
 
             # check if the parent has overflown
             if len(N.parent.entries) > Node.max_entries:
-                overflowTreatment(new_node1.parent, rtree, level-1)
+                overflowTreatment(new_node1.parent, rtree, level - 1)
             else:
                 adjust_rectangles(new_node1.parent)
 
@@ -364,7 +365,7 @@ def ChooseSplitIndex(entries, split_axis, min_entries):
             if overlap < min_overlap_value or (overlap == min_overlap_value and area_sum < min_area_value):
                 min_overlap_value = overlap
                 min_area_value = area_sum
-                chosen_index = i
+                index = i
 
     else:
         entries.sort(key=lambda entry: entry.rectangle.bottom_left[split_axis])
@@ -389,45 +390,56 @@ def ChooseSplitIndex(entries, split_axis, min_entries):
             if overlap < min_overlap_value or (overlap == min_overlap_value and area_sum < min_area_value):
                 min_overlap_value = overlap
                 min_area_value = area_sum
-                chosen_index = i
+                index = i
 
-    return entries[:chosen_index], entries[chosen_index:]
+    return entries[:index], entries[index:]
 
 
-def build_xml(node_elem, node, nodes):
-    for entry in node.entries:
+def build_xml(node_elem, N, nodes):
+    for entry in N.entries:
         if isinstance(entry, Entry):
             child_index = nodes.index(entry.child)
             entry.to_xml(node_elem, child_index)
         else:
             entry.to_xml(node_elem)
-    if node.parent is not None:
-        parent_node_index = nodes.index(node.parent)
+    if N.parent is not None:
+        parent_node_index = nodes.index(N.parent)
         ET.SubElement(node_elem, "ParentNodeIndex").text = str(parent_node_index)
-        ET.SubElement(node_elem, "SlotInParent").text = str(node.parent_slot)
+        ET.SubElement(node_elem, "SlotInParent").text = str(N.parent_slot)
 
 
-def save_rtree_to_xml(tree, filename):
+def save_rtree_to_xml(rtree, filename):
     root_elem = ET.Element("Nodes", max_entries=str(Node.max_entries))
 
-    nodes = tree  # Assuming tree is a list of nodes
+    nodes = rtree  # Assuming tree is a list of nodes
     for node in nodes:
         node_elem = ET.SubElement(root_elem, "Node")
         build_xml(node_elem, node, nodes)
 
-    xml_tree = ET.ElementTree(root_elem)
+    xml_rtree = ET.ElementTree(root_elem)
 
     # Save to the specified filename with 'utf-8' encoding and pretty formatting
-    xml_tree.write(filename, encoding="utf-8", xml_declaration=True)
-
-
-
-
+    xml_rtree.write(filename, encoding="utf-8", xml_declaration=True)
 
 
 # read the records from datafile
-read_blocks = read_blocks_from_datafile("datafile3000.xml") # testing
+read_blocks = read_blocks_from_datafile("datafile3000.xml")  # testing
+start_time = time.time()
 rtree = insert_one_by_one(read_blocks, Node.max_entries)
+end_time = time.time()
+
+
+print("Build the rtree by inserting the records one by one: ", end_time-start_time, " sec")
+print("The tree has ", len(rtree), " nodes: ")
+for i, node in enumerate(rtree):
+    print("node", i, "level=", node.getLevel(), "num of entries = ", len(node.entries))
+    for j, entry in enumerate(node.entries):
+        if isinstance(entry, LeafEntry):
+            print("       leaf_entry", j, ":", entry.record_id, entry.point)
+        else:
+            print("       entry", j, ":", entry.rectangle.bottom_left, " ", entry.rectangle.top_right)
+
+print("\n")
 
 # save the tree to the indexfile
-save_rtree_to_xml(rtree, "indexfile3000.xml") # testing
+save_rtree_to_xml(rtree, "indexfile3000.xml")  # testing
