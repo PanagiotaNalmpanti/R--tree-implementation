@@ -87,10 +87,10 @@ class Rectangle:
 
     def to_xml(self, parent):
         rectangle_elem = ET.SubElement(parent, "Rectangle")
-        bottom_left_point_elem = ET.SubElement(rectangle_elem, "BottomLeftPoint")
-        top_right_point_elem = ET.SubElement(rectangle_elem, "TopRightPoint")
-        bottom_left_point_elem.text = " ".join(map(str, self.bottom_left))
-        top_right_point_elem.text = " ".join(map(str, self.top_right))
+        bottom_left = ET.SubElement(rectangle_elem, "BottomLeft")
+        top_right = ET.SubElement(rectangle_elem, "TopRight")
+        bottom_left.text = " ".join(map(str, self.bottom_left))
+        top_right.text = " ".join(map(str, self.top_right))
 
 
 class Entry:
@@ -104,10 +104,10 @@ class Entry:
     def set_child(self, new_child):
         self.child = new_child
 
-    def to_xml(self, parent, child_node_index):
+    def to_xml(self, parent, child_index):
         entry_elem = ET.SubElement(parent, "Entry")
         self.rectangle.to_xml(entry_elem)
-        ET.SubElement(entry_elem, "ChildNodeIndex").text = str(child_node_index)
+        ET.SubElement(entry_elem, "ChildNodeIndex").text = str(child_index)
 
 
 class LeafEntry:

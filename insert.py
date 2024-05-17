@@ -46,7 +46,7 @@ def insert_to_tree(rtree, r):
     # If N can take another entry
     if len(N.entries) < Node.max_entries:
         N.entries.append(r)
-        adjust_rectangles(N)
+        AdjustRectangles(N)
     else:
         N.entries.append(r)
         # treatment
@@ -187,7 +187,7 @@ def overflowTreatment(N, rtree, level):
             if len(N.parent.entries) > Node.max_entries:
                 overflowTreatment(N.parent, rtree, level - 1)
             else:
-                adjust_rectangles(N.parent)
+                AdjustRectangles(N.parent)
 
         else:
             # Split internal
@@ -232,7 +232,7 @@ def overflowTreatment(N, rtree, level):
             if len(N.parent.entries) > Node.max_entries:
                 overflowTreatment(new_node1.parent, rtree, level - 1)
             else:
-                adjust_rectangles(new_node1.parent)
+                AdjustRectangles(new_node1.parent)
 
 
 def Split(N, min_entries):
@@ -264,14 +264,14 @@ def ReInsert(rtree, N):
         N.entries.remove(distances[i][0])
 
     # Adjust the bounding rectangle of the node
-    adjust_rectangles(N)
+    AdjustRectangles(N)
 
     # Reinsert the removed entries
     for i in range(p):
         insert_to_tree(rtree, distances[i][0])
 
 
-def adjust_rectangles(N):
+def AdjustRectangles(N):
     while N is not None and N.parent is not None:
         # if node is a leaf
         if isinstance(N.entries[0], LeafEntry):
