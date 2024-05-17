@@ -2,6 +2,7 @@ import sys
 import xml.etree.ElementTree as ET
 
 block_size = 32 * 1024  # 32KB
+max_entries = 4
 
 
 def read_records_from_osm(file):
@@ -34,22 +35,11 @@ def read_records_from_osm(file):
 
 # Sort-Tile-Recursive algorithm
 def bulk_loading(records):
-    rtree = []
-    # 1. Sorting: the spatial objects are sorted along one of the dimensions (e.g. x-coor). Quicksort or mergesort
-    #    We can use Z - order or Hilbert curve to covert the multi-dimensional coordinates to 1D value.
     sorted_records = sort_records(records)
-
-    # 2. Partitioning into tiles: the sorted objects are recursively partitioned into groups (tiles / blocks).
     blocks_of_records = createBlocks(sorted_records)
-
-    # 3. building the tree: at each level of the tree, the blocks are grouped together to form the nodes.
-    #    if the node exceeds the max capacity, it's split into two nodes.
-
-    # 4. recursive process: repeat the above process, until all objects are included in leaf nodes.
-
-    # 5. minimized overlap after the redistribution of the split nodes
-
-    return rtree
+    leaf_nodes = create_LeafNodes(blocks_of_records)
+    tree = finalTree(leaf_nodes)
+    return tree
 
 
 def sort_records(records):
@@ -82,6 +72,37 @@ def createBlocks(records):
             count_size = count_size + rec_size
             list_of_records.append(record)
     return blocks
+
+
+def create_LeafNodes(blocks):
+    leaf_nodes = []
+    for block in blocks:
+        mbr = calculateMBR(block)
+        leaf_nodes.append((mbr, block))
+    return leaf_nodes
+
+
+def calculateMBR(block):
+    length = len(block[0])
+    bottom_left = [min(float(record[dim]) for record in block) for dim in range(2, length)]
+    top_right = [max(float(record[dim]) for record in block) for dim in range(2, length)]
+    mbr = (bottom_left, top_right)
+    return mbr
+
+
+def finalTree(nodes):
+    if len(nodes) <= max_entries: # we reached the root
+        return nodes
+    level = []  # list that contains the nodes of the current level
+    for i in range(0, len(nodes), max_entries):
+        children = nodes[i:i + max_entries]
+        recs = []
+        for child in children:
+            for record in child[1]:
+                recs.append(record)
+        mbr = calculateMBR(recs)
+        level.append((mbr, children))
+    return finalTree(level)
 
 
 # read the records from datafile
