@@ -1,16 +1,14 @@
-import xml.etree.ElementTree as ET
-from Node import Node
-from Entry import Entry, LeafEntry, Rectangle
+from insert import *
 
 
 def delete(rtree, leaf):
     root = rtree[0]
-    N = FindLeaf(leaf, root) # remove the leaf entry if it exists
+    N = FindLeaf(leaf, root)  # remove the leaf entry if it exists
 
     if N is None:
         print("There is no such entry in the rtree")
 
-    elif N is not None:
+    else:
         # now if the node does not have enough entries
         if len(N.entries) < Node.min_entries:
             CondenseTree(rtree, N)
@@ -19,52 +17,101 @@ def delete(rtree, leaf):
 
 
 def FindLeaf(leaf, root):
-    node = root
-    while not isinstance(node, LeafEntry):
-        for entry in node.entries:
-            if entry.rectangle.overlaps_with_point(leaf.point):
-                node = entry.child
-                break
+    nodes_to_examine = [root]
+    while nodes_to_examine:
+        current_node = nodes_to_examine.pop()
+
+        # if it is a leaf node
+        if isinstance(current_node.entries[0], LeafEntry):
+            # search for the target entry
+            for entry in current_node.entries:
+                if entry.record_id == leaf.record_id and entry.point == leaf.point:
+                    current_node.entries.remove(entry)
+                    return current_node
+        # if it is internal node
         else:
-            return Node # point not found in the rtree
-
-    for entry in node.entries:
-        if entry.record_id == leaf.record_id and entry.point == leaf.point:
-            node.entries.remove(entry)
-            return node
-
+            for entry in current_node.entries:
+                # check if the entry's rectangle overlaps with the point of the target entry
+                if entry.rectangle.overlaps_with_point(leaf.point):
+                    nodes_to_examine.append(entry.child)
+    return None # entry not found
 
 
+def CondenseTree(rtree, N):
+    eliminated_nodes = []
+    while N.parent is not None:
+        # if the node does not have enough entries
+        if len(N.entries) < Node.min_entries:
+            # insert the node to the eliminated list
+            eliminated_nodes.append(N)
+            # remove the corresponding entry from the parent
+            parent = N.parent
+            parent.entries.remove(parent.entries[N.parent_slot])
+            # update parent slot for remaining entries
+            for i, entry in enumerate(parent.entries):
+                entry.child.parent_slot = i
+            rtree.remove(N)
 
-def AdjustRectangles(N):
-    while N is not None and N.parent is not None:
-        # if node is a leaf
-        if isinstance(N.entries[0], LeafEntry):
-            # gather the points
-            new_points = []
-            for entry in N.entries:
-                new_points.append(entry.point)
-
+            # Remove children of the node if node is internal
+            if isinstance(N.entries[0], Entry):
+                remove_children(rtree, N)
+            N = parent
         else:
-            # gather the bounding points of all rectangles
-            new_points = []
-            for entry in N.entries:
-                new_points.append(entry.rectangle.bottom_left)
-                new_points.append(entry.rectangle.top_right)
+            # adjust the MBR recursively
+            AdjustRectangles(N)
+            break
 
-        # update the MBR of the parent entry
-        N.parent.entries[N.parent_slot].set_rectangle(new_points)
+    root = rtree[0]
+    # if the root has one entry, make its child the new root
+    if len(root.entries) == 1 and isinstance(root.entries[0], Entry):
+        root.child.set_parent(None, None)
+        new_root = root.entries[0].child
+        rtree.remove(root)
+        rtree[0] = new_root
 
-        # move up to the parent node
-        N = N.parent
+    # set overflow treatment level based on the last node's level
+    Node.set_overflow_treatment_level(rtree[-1].getLevel())
+
+    # ReInsert entries from eliminated nodes
+    for node in eliminated_nodes:
+        # get all leaf entries of the node
+        leaf_entries = get_leaf_entries(node)
+        # insert them to the rtree
+        for leaf in leaf_entries:
+            insert_to_tree(rtree, leaf)
 
 
+def remove_children(rtree, N):
+    children_to_remove = [N]
+    while children_to_remove:
+        current_child = children_to_remove.pop(0)
+        # if the node is internal
+        if isinstance(current_child.entries[0], Entry):
+            for entry in current_child.entries:
+                children_to_remove.append(entry.child)
+                rtree.remove(entry.child)
+
+
+def get_leaf_entries(N):
+    leaf_entries = []
+    nodes_to_visit = [N]
+
+    while nodes_to_visit:
+        current_node = nodes_to_visit.pop()
+        if isinstance(current_node.entries[0], LeafEntry):
+            for entry in current_node.entries:
+                leaf_entries.append(entry)
+        # if the node is not leaf, add its children to the  list of nodes to visit
+        else:
+            for entry in current_node.entries:
+                nodes_to_visit.append(entry.child)
+    return leaf_entries
 
 
 def load_rtree_from_xml(file):
     rtree = ET.parse(file)
     root = rtree.getroot()
-    nodes =[]
+    nodes = []
 
     max_entries = int(root.attrib.get("max_entries"))
     Node.set_max_entries(max_entries)
@@ -85,7 +132,7 @@ def load_rtree_from_xml(file):
                 if child_index is not None:
                     child_index = int(child_index.text)
                     child_indices.append(child_index)
-                entries.append(Entry(rectangle, None)) # create an Entry object and append it to the entries list
+                entries.append(Entry(rectangle, None))  # create an Entry object and append it to the entries list
 
         # leaf nodes
         elif N.find("LeafEntry") is not None:
@@ -110,11 +157,11 @@ def load_rtree_from_xml(file):
             node = Node(entries)  # root node only
         nodes.append(node)
 
-        Node.set_overflow_treatment_level(nodes[-1].getLevel()) # gets the level of the last node
+        Node.set_overflow_treatment_level(nodes[-1].getLevel())  # gets the level of the last node
 
     return nodes
 
 
 rtree = load_rtree_from_xml("indexfile3000.xml")
 
-delete(rtree,LeafEntry())
+delete(rtree, LeafEntry()) # must choose a leaf entry like LeafEntry([block_id, slot, lat, lon])

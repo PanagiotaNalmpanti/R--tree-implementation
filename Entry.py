@@ -85,6 +85,13 @@ class Rectangle:
 
         return margin
 
+    # needed to search for the target entry to delete
+    def overlaps_with_point(self, point):
+        for i in range(len(self.bottom_left)):
+            if not(self.bottom_left[i] <= point[i] <= self.top_right[i]):
+                return False
+        return True
+
     def to_xml(self, parent):
         rectangle_elem = ET.SubElement(parent, "Rectangle")
         bottom_left = ET.SubElement(rectangle_elem, "BottomLeft")
