@@ -5,7 +5,7 @@ block_size = 32 * 1024  # 32KB
 max_entries = 4
 
 
-def read_records_from_osm(file):
+def read_records_from_datafile(file):
     # parse the .osm XML file
     tree = ET.parse("map.osm")
     root = tree.getroot()
@@ -131,6 +131,6 @@ def build_xml(node):
 
 
 # read the records from datafile
-read_records = read_records_from_osm("datafile3000.xml")
+read_records = read_records_from_datafile("datafile3000.xml")
 rtree = bulk_loading(read_records)
 rtree_xml(rtree)
