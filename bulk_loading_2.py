@@ -8,44 +8,37 @@ block_size = 32 * 1024  # 32KB
 
 
 def read_records_from_datafile(file):
-    # parse the .osm XML file
-    tree = ET.parse("map.osm")
+    tree = ET.parse(file)
     root = tree.getroot()
+    number_of_blocks = int(root.find('Block').find('number_of_blocks').text)
 
-    # list to store the points only (node data)
-    record_data = []
-    tags = {}  # dictionary
-    count = 0  # for testing only
-    for element in root:
-        if element.tag == "node":
-            if count < 3000:  # for testing only
-                count += 1  # for testing only
-                id = element.attrib["id"]
-                lat = element.attrib["lat"]
-                lon = element.attrib["lon"]
-                for tag in element.findall("tag"):
-                    tags[tag.attrib["k"]] = tag.attrib["v"]
-                name = tags.get("name", "unknown")
+    for id in range(1, number_of_blocks):
+        block_id = id
+        record_data = []
 
-                # coordinates = (lat,lon)
-                record_data.append([id, name, lat, lon])  # here you can add more dimensions
+        # Iterate through records within the block
+        for record in root.find(f"Block[@id='{id}']").findall('Record'):
+            slot = int(record.attrib['id'])
 
-            else:  # for testing only
-                break  # for testing only
+            coordinates_text = record.find('coordinates').text
+            coordinates = coordinates_text.split()
+
+            record_data.append([block_id, slot] + [float(coord) for coord in coordinates])
     return record_data
 
 
 def bulk_loading(recs):
     sorted_records = sort_records(recs)
-    blocks = createBlocks(sorted_records)
+    #print(sorted_records)
+    #blocks = createBlocks(sorted_records)
 
-    block_leaves = []
-    for block in blocks:
-        for record in block:
-            r = LeafEntry(record)
-            b = Node()
-            b.entries.append(r)
-        block_leaves.append(b)
+    #block_leaves = []
+    #for block in blocks:
+    #    for record in block:
+    #        r = LeafEntry(record)
+    #        b = Node()
+    #        b.entries.append(r)
+    #    block_leaves.append(b)
 
     tree = []
     return tree
