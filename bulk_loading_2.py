@@ -11,10 +11,9 @@ def read_records_from_datafile(file):
     tree = ET.parse(file)
     root = tree.getroot()
     number_of_blocks = int(root.find('Block').find('number_of_blocks').text)
-
+    record_data = []
     for id in range(1, number_of_blocks):
         block_id = id
-        record_data = []
 
         # Iterate through records within the block
         for record in root.find(f"Block[@id='{id}']").findall('Record'):
