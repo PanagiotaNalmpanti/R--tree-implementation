@@ -1,45 +1,46 @@
+import math
 import sys
 import xml.etree.ElementTree as ET
 
+import insert
+from Node import Node
+from Entry import Entry, LeafEntry, Rectangle
+from insert import insert_to_tree
+
 block_size = 32 * 1024  # 32KB
-max_entries = 4
 
 
 def read_records_from_datafile(file):
-    # parse the .osm XML file
-    tree = ET.parse("map.osm")
+    tree = ET.parse(file)
     root = tree.getroot()
-
-    # list to store the points only (node data)
+    number_of_blocks = int(root.find('Block').find('number_of_blocks').text)
     record_data = []
-    tags = {}  # dictionary
-    count = 0  # for testing only
-    for element in root:
-        if element.tag == "node":
-            if count < 3000:  # for testing only
-                count += 1  # for testing only
-                id = element.attrib["id"]
-                lat = element.attrib["lat"]
-                lon = element.attrib["lon"]
-                for tag in element.findall("tag"):
-                    tags[tag.attrib["k"]] = tag.attrib["v"]
-                name = tags.get("name", "unknown")
+    for id in range(1, number_of_blocks):
+        block_id = id
 
-                # coordinates = (lat,lon)
-                record_data.append([id, name, lat, lon])  # here you can add more dimensions
+        # Iterate through records within the block
+        for record in root.find(f"Block[@id='{id}']").findall('Record'):
+            slot = int(record.attrib['id'])
 
-            else:  # for testing only
-                break  # for testing only
+            coordinates_text = record.find('coordinates').text
+            coordinates = coordinates_text.split()
+
+            record_data.append([block_id, slot] + [float(coord) for coord in coordinates])
     return record_data
 
 
-# Sort-Tile-Recursive algorithm
-def bulk_loading(records):
-    sorted_records = sort_records(records)
-    blocks_of_records = createBlocks(sorted_records)
-    leaf_nodes = create_LeafNodes(blocks_of_records)
-    tree = finalTree(leaf_nodes)
-    return tree
+def bulk_loading(recs):
+    sorted_records = sort_records(recs)
+
+    # create entries type LeafEntry
+    leaf_entries = []
+    for record in sorted_records:
+        entry = LeafEntry(record)
+        leaf_entries.append(entry)
+
+    tree = []
+    rtree = insert_bottom_up(tree, leaf_entries)
+    return rtree
 
 
 def sort_records(records):
@@ -56,81 +57,154 @@ def z_order_method(coordinates):
     return z_value
 
 
-def createBlocks(records):
-    blocks = []
-    list_of_records = []
-    count_size = 0
-    for record in records:
-        rec_size = sys.getsizeof(record)
-        if count_size + rec_size <= block_size:
-            count_size = count_size + rec_size
-            list_of_records.append(record)
-        else:
-            count_size = 0
-            blocks.append(list_of_records)
-            list_of_records = []
-            count_size = count_size + rec_size
-            list_of_records.append(record)
-    return blocks
-
-
-def create_LeafNodes(blocks):
+def insert_bottom_up(tree, leaf_entries):
+    # Create leaf nodes
     leaf_nodes = []
-    for block in blocks:
-        mbr = calculateMBR(block)
-        leaf_nodes.append((mbr, block))
-    return leaf_nodes
+    current_entries = []
+    for record in leaf_entries:
+        if len(current_entries) < Node.max_entries:
+            current_entries.append(record)
+        else:
+            new_node = Node(current_entries)
+            leaf_nodes.append(new_node)
+            current_entries = [record]
 
-
-def calculateMBR(block):
-    length = len(block[0])
-    bottom_left = [min(float(record[dim]) for record in block) for dim in range(2, length)]
-    top_right = [max(float(record[dim]) for record in block) for dim in range(2, length)]
-    mbr = (bottom_left, top_right)
-    return mbr
-
-
-def finalTree(nodes):
-    if len(nodes) <= max_entries:  # we reached the root
-        return nodes
-    level = []  # list that contains the nodes of the current level
-    for i in range(0, len(nodes), max_entries):
-        children = nodes[i:i + max_entries]
-        recs = []
-        for child in children:
-            for record in child[1]:
-                recs.append(record)
-        mbr = calculateMBR(recs)
-        level.append((mbr, children))
-    return finalTree(level)
-
-
-def rtree_xml(rtree):
-    root_element = ET.Element("R_Star_Tree")
-    for node in rtree:
-        root_element.append(build_xml(node))
-
-    tree = ET.ElementTree(root_element)
-    tree.write("bulk_loaded_tree.xml")
-
-
-def build_xml(node):
-    node_element = ET.Element("Node")
-    mbr_element = ET.SubElement(node_element, "MBR")
-    mbr_element.text = str(node[0])
-
-    if isinstance(node[1][0], list):
-        for record in node[1]:
-            record_element = ET.SubElement(node_element, "Record")
-            record_element.text = str(record)
+    entries_left = []  # last entries that do not reach the minimum number a node should have
+    if len(current_entries) >= Node.min_entries:
+        new_node = Node(current_entries)
+        leaf_nodes.append(new_node)
     else:
-        for child in node[1]:
-            child_element = build_xml(child)
-            node_element.append(child_element)
-    return node_element
+        entries_left.append(current_entries)
+
+    # create entries (type Entry, parents of the leaf nodes) that contain the MBR of the leaf nodes
+    entries = []
+    for node in leaf_nodes:
+        points = [entry.point for entry in node.entries]
+        node.mbr = Rectangle(points)
+        entries.append(Entry(node.mbr, node))  # Entry(Rectangle, child)
+
+    internal_nodes = []
+    current_entries = []
+    for entry in entries:
+        if len(current_entries) < Node.max_entries:
+            current_entries.append(entry)
+        else:
+            new_node = Node(current_entries)
+            internal_nodes.append(new_node)
+            # set the parent
+            for e in current_entries:
+                e.child.set_parent(new_node, current_entries.index(e))  # set_parent(parent, parent_slot)
+            current_entries = [entry]
+
+    if len(current_entries) > 0:
+        new_node = Node(current_entries)
+        internal_nodes.append(new_node)
+        for e in current_entries:
+            e.child.set_parent(new_node, current_entries.index(e))
+    if len(internal_nodes) == 1:
+        root = internal_nodes[0]  # if there is only one node in the list, then we set it as root
+        tree = [root]
+        for node in leaf_nodes:
+            tree.append(node)
+
+        overflow_treatment_level = tree[-1].getLevel()
+        for entry in entries_left:
+            insert.insert_to_tree(tree, entry)
+    else:
+        if len(internal_nodes[-1].entries) < Node.min_entries:
+            entries_from_last_internal = internal_nodes[-1].entries
+            last_leaf_nodes = [entry.child for entry in entries_from_last_internal]
+            leaf_entr = [entry.entries for entry in last_leaf_nodes]
+            entries_left.extend(entry for entry in leaf_entr)
+
+            for leaf_node in last_leaf_nodes:  # remove leaf nodes that are connected with the last internal node
+                if leaf_node in leaf_nodes:
+                    leaf_nodes.remove(leaf_node)
+
+            internal_nodes = internal_nodes[:-1]  # remove the last internal node
+
+    # create upper-level internal nodes
+    upper_level_internal_nodes = internal_nodes
+    while len(upper_level_internal_nodes) > 1:
+        next_level_nodes = []
+        set_of_nodes = []
+        for node in upper_level_internal_nodes:
+            if len(set_of_nodes) < Node.max_entries:
+                set_of_nodes.append(node)
+            else:
+                # create new node
+                entr = []
+                for n in set_of_nodes:
+                    for e in n.entries:
+                        entr.append(e)
+                mbr = Rectangle([e.rectangle.bottom_left for e in entr] +
+                                [e.rectangle.top_right for e in entr])
+                set_of_entries = [Entry(mbr, node) for node in set_of_nodes]
+                new_node = Node(set_of_entries)
+                next_level_nodes.append(new_node)
+
+                for slot, entry in enumerate(new_node.entries):
+                    entry.child.set_parent(new_node, slot)
+                set_of_nodes = [node]
+
+        if len(set_of_nodes) > 0:
+            # create new node
+            entr = []
+            for n in set_of_nodes:
+                for e in n.entries:
+                    entr.append(e)
+            mbr = Rectangle([e.rectangle.bottom_left for e in entr] +
+                            [e.rectangle.top_right for e in entr])
+            set_of_entries = [Entry(mbr, node) for node in set_of_nodes]
+            new_node = Node(set_of_entries)
+            next_level_nodes.append(new_node)
+
+            for slot, entry in enumerate(new_node.entries):
+                entry.child.set_parent(new_node, slot)
+
+        upper_level_internal_nodes = next_level_nodes
+
+    if len(upper_level_internal_nodes) == 1:  # if there is only one node left, then it's the root
+        root = upper_level_internal_nodes[0]
+
+    # construct the final tree
+    temp = upper_level_internal_nodes
+    for node in temp:
+        if node != root:
+            upper_level_internal_nodes.append(node)
+    tree = [root] + upper_level_internal_nodes + leaf_nodes
+
+    # insert the leaf entries (records) that are left from the node that was not inserted in the tree
+    overflow_treatment_level = tree[-1].getLevel()
+    for entry in entries_left:
+        insert.insert_to_tree(tree, entry)
+
+    return tree
 
 
-# read the records from datafile
+def build_xml(node_elem, N, nodes):
+    for entry in N.entries:
+        if isinstance(entry, Entry):
+            child_index = nodes.index(entry.child)
+            entry.to_xml(node_elem, child_index)
+        else:
+            entry.to_xml(node_elem)
+    if N.parent is not None:
+        parent_node_index = nodes.index(N.parent)
+        ET.SubElement(node_elem, "ParentNodeIndex").text = str(parent_node_index)
+        ET.SubElement(node_elem, "SlotInParent").text = str(N.parent_slot)
+
+
+def save_to_xml(tree, file):
+    root_elem = ET.Element("Nodes", max_entries=str(Node.max_entries))
+    nodes = tree
+    for node in nodes:
+        node_elem = ET.SubElement(root_elem, "Node")
+        build_xml(node_elem, node, nodes)
+    xml_tree = ET.ElementTree(root_elem)
+    xml_tree.write(file, encoding="utf-8", xml_declaration=True)
+
+
 read_records = read_records_from_datafile("datafile3000.xml")
 rtree = bulk_loading(read_records)
-rtree_xml(rtree)
+save_to_xml(rtree, "indexfile3000_bulk.xml")
