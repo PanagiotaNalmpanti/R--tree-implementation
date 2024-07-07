@@ -78,18 +78,30 @@ Node.set_max_entries(4)
 rtree = [root_node, internal_node1, internal_node2, leaf_node1, leaf_node2, leaf_node3, leaf_node4, leaf_node5]
 
 save_rtree_to_xml(rtree, "indexfile1.xml")
-rtree = load_rtree_from_xml("indexfile1.xml")
+#rtree = load_rtree_from_xml("indexfile1.xml")
 
-# print("max entries = ", Node.max_entries)
-# print("min entries = ", Node.min_entries)
+insert_to_tree(rtree, LeafEntry([1, 20, -3, -1]))
+insert_to_tree(rtree, LeafEntry([1, 30, -4, 1]))
+insert_to_tree(rtree, LeafEntry([1, 40, -4, -6]))
+insert_to_tree(rtree, LeafEntry([1, 50, -7, -7]))
+insert_to_tree(rtree, LeafEntry([1, 60, -6, -2]))
+insert_to_tree(rtree, LeafEntry([1, 70, -8, -2]))
+insert_to_tree(rtree, LeafEntry([1, 80, -9, -3]))
 
-insert_to_tree(rtree, LeafEntry[1, 20, -3, -1])
-insert_to_tree(rtree, LeafEntry[1, 30, -4, 1])
-insert_to_tree(rtree, LeafEntry[1, 40, -4, -6])
-insert_to_tree(rtree, LeafEntry[1, 50, -7, -7])
-insert_to_tree(rtree, LeafEntry[1, 60, -6, -2])
-insert_to_tree(rtree, LeafEntry[1, 70, -8, -2])
-insert_to_tree(rtree, LeafEntry[1, 80, -9, -3])
+insert_to_tree(rtree, LeafEntry([1, 90, -4, -4]))
+insert_to_tree(rtree, LeafEntry([1, 90, -7, 1]))
+insert_to_tree(rtree, LeafEntry([1, 90, -6.5, -6])) # must split here
 
 
+save_rtree_to_xml(rtree, "indexfile1.xml")
 
+# print rtree
+print("max entries = ", Node.max_entries)
+for i, n in enumerate(rtree):
+    print("node ", i, "level ", n.getLevel())
+    if isinstance(n.entries[0], LeafEntry):
+        for j, entry in enumerate(n.entries):
+            print("     leaf_entry ", j, ": ", entry.point)
+    else:
+        for j, entry in enumerate(n.entries):
+            print("     entry ", j, ": ", entry.rectangle.bottom_left, " ", entry.rectangle.top_right)

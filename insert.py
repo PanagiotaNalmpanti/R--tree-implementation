@@ -234,61 +234,93 @@ def overflowTreatment(N, rtree, level):
 
 
 def Split(N, min_entries):
+    print("split")
     split_axis = ChooseSplitAxis(N.entries, min_entries)
     group1, group2 = ChooseSplitIndex(N.entries, split_axis, min_entries)
     return group1, group2
 
 
 def ReInsert(rtree, N):
+    print("reinsert")
     # Calculate the bounding rectangle of the node N
     points = []
     for entry in N.entries:
-        points.append(entry.point)
+        if isinstance(entry, LeafEntry):
+            points.append(entry.point)
+        elif isinstance(entry, Entry):
+            points.append(entry.rectangle.bottom_left)
+            points.append(entry.rectangle.top_right)
 
     bounding_rectangle = Rectangle(points)
 
     # Calculate distances from the center of the bounding rectangle
     distances = []
     for entry in N.entries:
-        distance = bounding_rectangle.euclidean_distance(entry.point)
+        if isinstance(entry, LeafEntry):
+            distance = bounding_rectangle.euclidean_distance(entry.point)
+        elif isinstance(entry, Entry):
+            distance = bounding_rectangle.euclidean_distance(entry.rectangle.center())
         distances.append((entry, distance))
 
     # Sort distances in decreasing order
     distances.sort(key=lambda x: x[1], reverse=True)  # RI2
 
     p = int(round(0.3 * Node.max_entries))  # 30% of the entries that exist in node N
+    removed_entries = []
     for i in range(p):
-        # Remove the first p entries
+        # Remove the first p entries and store them
+        removed_entries.append(distances[i][0])
         N.entries.remove(distances[i][0])
 
     # Adjust the bounding rectangle of the node
     AdjustRectangles(N)
 
     # Reinsert the removed entries
-    for i in range(p):
-        insert_to_tree(rtree, distances[i][0])
+    for entry in removed_entries:
+        if isinstance(entry, LeafEntry):
+            insert_to_tree(rtree, entry)
+        elif isinstance(entry, Entry):
+            leaf_entries = get_leaf_entries_from_entry(entry)
+            for leaf_entry in leaf_entries:
+                insert_to_tree(rtree, leaf_entry)
+    N.increase_overflow_treatment_level()
+
+
+# Get leaf entries from an entry
+
+def get_leaf_entries_from_entry(entry):
+    leaf_entries = []
+
+    def traverse(node):
+        if isinstance(node.entries[0], LeafEntry):  # Check if the node contains LeafEntry objects
+            leaf_entries.extend(node.entries)
+        else:
+            for entry in node.entries:
+                traverse(entry.child)
+
+    if entry.child:
+        traverse(entry.child)
+
+    return leaf_entries
 
 
 def AdjustRectangles(N):
-    while N is not None and N.parent is not None:
-        # if node is a leaf
-        if isinstance(N.entries[0], LeafEntry):
-            # gather the points
+    while N is not None:
+        if N.parent is not None:
             new_points = []
-            for entry in N.entries:
-                new_points.append(entry.point)
+            if isinstance(N.entries[0], LeafEntry):
+                # Collect points from LeafEntry objects
+                for leaf_entry in N.entries:
+                    new_points.append(leaf_entry.point)
+            else:
+                # Collect points from Entry objects
+                for entry in N.entries:
+                    new_points.append(entry.rectangle.bottom_left)
+                    new_points.append(entry.rectangle.top_right)
 
-        else:
-            # gather the bounding points of all rectangles
-            new_points = []
-            for entry in N.entries:
-                new_points.append(entry.rectangle.bottom_left)
-                new_points.append(entry.rectangle.top_right)
+            # Update the MBR of the parent entry
+            N.parent.entries[N.parent_slot].rectangle = Rectangle(new_points)
 
-        # update the MBR of the parent entry
-        N.parent.entries[N.parent_slot].set_rectangle(new_points)
-
-        # move up to the parent node
         N = N.parent
 
 
@@ -392,24 +424,26 @@ def ChooseSplitIndex(entries, split_axis, min_entries):
 
     return entries[:index], entries[index:]
 
+##<DONT DELETE>
+# # read the records from datafile
+# read_blocks = read_blocks_from_datafile("datafile3000.xml")  # testing
+# start_time = time.time()
+# rtree = insert_one_by_one(read_blocks, Node.max_entries)
+# end_time = time.time()
+#
+# print("Build the rtree by inserting the records one by one: ", end_time - start_time, " sec")
+# print("The tree has ", len(rtree), " nodes: ")
+# for i, node in enumerate(rtree):
+#     print("node", i, "level=", node.getLevel(), "num of entries = ", len(node.entries))
+#     for j, entry in enumerate(node.entries):
+#         if isinstance(entry, LeafEntry):
+#             print("       leaf_entry", j, ":", entry.record_id, entry.point)
+#         else:
+#             print("       entry", j, ":", entry.rectangle.bottom_left, " ", entry.rectangle.top_right)
+#
+# print("\n")
+#
+# # save the tree to the indexfile
+# save_rtree_to_xml(rtree, "indexfile3000.xml")  # testing
 
-# read the records from datafile
-read_blocks = read_blocks_from_datafile("datafile3000.xml")  # testing
-start_time = time.time()
-rtree = insert_one_by_one(read_blocks, Node.max_entries)
-end_time = time.time()
-
-print("Build the rtree by inserting the records one by one: ", end_time - start_time, " sec")
-print("The tree has ", len(rtree), " nodes: ")
-for i, node in enumerate(rtree):
-    print("node", i, "level=", node.getLevel(), "num of entries = ", len(node.entries))
-    for j, entry in enumerate(node.entries):
-        if isinstance(entry, LeafEntry):
-            print("       leaf_entry", j, ":", entry.record_id, entry.point)
-        else:
-            print("       entry", j, ":", entry.rectangle.bottom_left, " ", entry.rectangle.top_right)
-
-print("\n")
-
-# save the tree to the indexfile
-save_rtree_to_xml(rtree, "indexfile3000.xml")  # testing
+##<DONT DELETE/>

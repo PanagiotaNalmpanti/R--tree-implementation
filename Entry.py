@@ -32,16 +32,19 @@ class Rectangle:
 
     def calculate_overlap_enlargement(self, r, index, N):
         # create new rectangle including the points of the current rectangle and the point of the new record
-        points_of_new_Rectangle = [self.bottom_left, self.top_right, r.point]
-        new_rectangle = Rectangle(points_of_new_Rectangle)
+        points_of_new_rectangle = [self.bottom_left, self.top_right]
 
-        enlargement = 0
-        # iterate over each entry in the node excluding the entry at the specified index. We don't need the overlap with itself.
-        for i, entry in enumerate(N.entries):
-            if i != index:
-                # value represents the contribution of each entry to the enlargement of the new rectangle
-                enlargement += entry.rectangle.calculate_overlap_value(new_rectangle)
-        return enlargement
+        # Check if r is a LeafEntry or an Entry
+        if isinstance(r, LeafEntry):
+            points_of_new_rectangle.append(r.point)
+        elif isinstance(r, Entry):
+            points_of_new_rectangle.extend([r.rectangle.bottom_left, r.rectangle.top_right])
+
+        new_rectangle = Rectangle(points_of_new_rectangle)
+        current_overlap = self.calculate_area()
+        new_overlap = new_rectangle.calculate_area()
+        return new_overlap - current_overlap
+
 
     def calculate_overlap_value(self, other_rectangle):
         overlap_value = 1
@@ -60,14 +63,18 @@ class Rectangle:
         return overlap_value
 
     def calculate_area_enlargement(self, r):
-        # create new rectangle including the points of the current rectangle and the point of the new record
-        points_of_new_Rectangle = [self.bottom_left, self.top_right, r.point]
-        new_rectangle = Rectangle(points_of_new_Rectangle)
+        points_of_new_rectangle = [self.bottom_left, self.top_right]
 
-        # area enlargement cost by subtracting the area of the current rectangle from the area of the new rectangle
-        before = self.calculate_area()
-        after = new_rectangle.calculate_area()
-        return after - before
+        # Check if r is a LeafEntry or an Entry
+        if isinstance(r, LeafEntry):
+            points_of_new_rectangle.append(r.point)
+        elif isinstance(r, Entry):
+            points_of_new_rectangle.extend([r.rectangle.bottom_left, r.rectangle.top_right])
+
+        new_rectangle = Rectangle(points_of_new_rectangle)
+        current_area = self.calculate_area()
+        new_area = new_rectangle.calculate_area()
+        return new_area - current_area
 
     def calculate_area(self):
         # area of current rectangle
