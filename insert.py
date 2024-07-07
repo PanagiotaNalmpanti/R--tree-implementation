@@ -1,7 +1,5 @@
-import xml.etree.ElementTree as ET
-from Node import Node
-from Entry import Entry, LeafEntry, Rectangle
 import time
+from create_indexfile import *
 
 
 def read_blocks_from_datafile(file):
@@ -395,41 +393,13 @@ def ChooseSplitIndex(entries, split_axis, min_entries):
     return entries[:index], entries[index:]
 
 
-def build_xml(node_elem, N, nodes):
-    for entry in N.entries:
-        if isinstance(entry, Entry):
-            child_index = nodes.index(entry.child)
-            entry.to_xml(node_elem, child_index)
-        else:
-            entry.to_xml(node_elem)
-    if N.parent is not None:
-        parent_node_index = nodes.index(N.parent)
-        ET.SubElement(node_elem, "ParentNodeIndex").text = str(parent_node_index)
-        ET.SubElement(node_elem, "SlotInParent").text = str(N.parent_slot)
-
-
-def save_rtree_to_xml(rtree, filename):
-    root_elem = ET.Element("Nodes", max_entries=str(Node.max_entries))
-
-    nodes = rtree  # Assuming tree is a list of nodes
-    for node in nodes:
-        node_elem = ET.SubElement(root_elem, "Node")
-        build_xml(node_elem, node, nodes)
-
-    xml_rtree = ET.ElementTree(root_elem)
-
-    # Save to the specified filename with 'utf-8' encoding and pretty formatting
-    xml_rtree.write(filename, encoding="utf-8", xml_declaration=True)
-
-
 # read the records from datafile
 read_blocks = read_blocks_from_datafile("datafile3000.xml")  # testing
 start_time = time.time()
 rtree = insert_one_by_one(read_blocks, Node.max_entries)
 end_time = time.time()
 
-
-print("Build the rtree by inserting the records one by one: ", end_time-start_time, " sec")
+print("Build the rtree by inserting the records one by one: ", end_time - start_time, " sec")
 print("The tree has ", len(rtree), " nodes: ")
 for i, node in enumerate(rtree):
     print("node", i, "level=", node.getLevel(), "num of entries = ", len(node.entries))

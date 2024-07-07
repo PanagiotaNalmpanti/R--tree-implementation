@@ -1,67 +1,86 @@
 from Node import Node
 from Entry import Rectangle, Entry, LeafEntry
+import xml.etree.ElementTree as ET
 
-# Define LeafEntries
-leaf_entry1 = LeafEntry([1, 0, -6.0, -5.0])
-leaf_entry2 = LeafEntry([1, 1, -5.0, -3.0])
-leaf_entry3 = LeafEntry([1, 2, -3.0, -4.0])
-leaf_entry4 = LeafEntry([1, 3, -6.0, 7.0])
-leaf_entry5 = LeafEntry([1, 4, 2.0, 3.0])
-leaf_entry6 = LeafEntry([1, 5, 4.0, 5.0])
-leaf_entry7 = LeafEntry([1, 6, -1.0, 0.0])
-leaf_entry8 = LeafEntry([1, 7, 6.0, 8.0])
-leaf_entry9 = LeafEntry([1, 8, 0.5, 1.5])
-leaf_entry10 = LeafEntry([1, 9, -7.0, -6.0])
 
-# Define Leaf Nodes
-leaf_node1 = Node([leaf_entry1, leaf_entry2])
-leaf_node2 = Node([leaf_entry3, leaf_entry4])
-leaf_node3 = Node([leaf_entry5, leaf_entry6])
-leaf_node4 = Node([leaf_entry7, leaf_entry8])
-leaf_node5 = Node([leaf_entry9, leaf_entry10])
+def build_xml(node_elem, N, nodes):
+    for entry in N.entries:
+        if isinstance(entry, Entry):
+            child_index = nodes.index(entry.child)
+            entry.to_xml(node_elem, child_index)
+        else:
+            entry.to_xml(node_elem)
+    if N.parent is not None:
+        parent_node_index = nodes.index(N.parent)
+        ET.SubElement(node_elem, "ParentNodeIndex").text = str(parent_node_index)
+        ET.SubElement(node_elem, "SlotInParent").text = str(N.parent_slot)
 
-# Define Rectangles for Leaf Entries
-rectangle1 = Rectangle([leaf_entry1.point, leaf_entry2.point])
-rectangle2 = Rectangle([leaf_entry3.point, leaf_entry4.point])
-rectangle3 = Rectangle([leaf_entry5.point, leaf_entry6.point])
-rectangle4 = Rectangle([leaf_entry7.point, leaf_entry8.point])
-rectangle5 = Rectangle([leaf_entry9.point, leaf_entry10.point])
 
-# Define Entries with Rectangles and Leaf Nodes
-entry1 = Entry(rectangle1, leaf_node1)
-entry2 = Entry(rectangle2, leaf_node2)
-entry3 = Entry(rectangle3, leaf_node3)
-entry4 = Entry(rectangle4, leaf_node4)
-entry5 = Entry(rectangle5, leaf_node5)
+def save_rtree_to_xml(rtree, filename):
+    root_elem = ET.Element("Nodes", max_entries=str(Node.max_entries))
 
-# Define Internal Node
-internal_node1 = Node([entry1, entry2, entry3, entry4, entry5])
+    nodes = rtree  # Assuming tree is a list of nodes
+    for node in nodes:
+        node_elem = ET.SubElement(root_elem, "Node")
+        build_xml(node_elem, node, nodes)
 
-# Define Root Rectangle
-root_rectangle1 = Rectangle([entry1.rectangle.bottom_left, entry1.rectangle.top_right,
-                              entry2.rectangle.bottom_left, entry2.rectangle.top_right,
-                              entry3.rectangle.bottom_left, entry3.rectangle.top_right,
-                              entry4.rectangle.bottom_left, entry4.rectangle.top_right,
-                              entry5.rectangle.bottom_left, entry5.rectangle.top_right])
+    xml_rtree = ET.ElementTree(root_elem)
 
-# Define Root Entry
-root_entry1 = Entry(root_rectangle1, internal_node1)
+    # Save to the specified filename with 'utf-8' encoding and pretty formatting
+    xml_rtree.write(filename, encoding="utf-8", xml_declaration=True)
 
-# Define Root Node
-root_node = Node([root_entry1])
 
-# Set parent-child relationships
-leaf_node1.set_parent(internal_node1, 0)
-leaf_node2.set_parent(internal_node1, 1)
-leaf_node3.set_parent(internal_node1, 2)
-leaf_node4.set_parent(internal_node1, 3)
-leaf_node5.set_parent(internal_node1, 4)
+def load_rtree_from_xml(filename):
+    rtree = ET.parse(filename)
+    root = rtree.getroot()
+    nodes = []  # store the final tree
 
-internal_node1.set_parent(root_node, 0)
+    # load and set the max_entries of the tree nodes
+    max_entries = int(root.attrib.get("max_entries"))
+    Node.set_max_entries(max_entries)
 
-# Set max entries for the root node
-Node.set_max_entries(3)
+    # start rebuilding all the Node objects
+    for node_elem in root.findall("Node"):
+        entries = []  # temp list to hold the entries of each Node
+        child_indexes = []
 
-# Create the tree structure
-tree = [root_node, internal_node1, leaf_node1, leaf_node2, leaf_node3, leaf_node4, leaf_node5]
-print(tree)
+        # for every Entry in the Node, rebuild the Entry object and append it to the entries list
+        if node_elem.find("Entry") is not None:
+            for entry_elem in node_elem.findall("Entry"):
+                rectangle_elem = entry_elem.find("Rectangle")
+                bottom_left = [float(coord) for coord in rectangle_elem.find("BottomLeft").text.split()]
+                top_right = [float(coord) for coord in rectangle_elem.find("TopRight").text.split()]
+                rectangle = Rectangle([bottom_left, top_right])
+
+                child_index_elem = entry_elem.find("ChildNodeIndex")
+                # save the indexes of the children in order to set them later when all the node have been constructed
+                if child_index_elem is not None:
+                    child_index = int(child_index_elem.text)
+                    child_indexes.append(child_index)
+                entries.append(Entry(rectangle, None))
+
+        # for every LeafEntry in the Node, rebuild the LeafEntry object and append it to the entries list
+        elif node_elem.find("LeafEntry") is not None:
+            for entry_elem in node_elem.findall("LeafEntry"):
+                record_id_elem = entry_elem.find("RecordID")
+                point_elem = entry_elem.find("Point")
+                record_id = tuple(map(int, record_id_elem.text.split(",")))
+                point = [float(coord) for coord in point_elem.text.split()]
+                record = [record_id[0], record_id[1]] + [float(coord) for coord in point]
+                leaf_entry = LeafEntry(record)
+                entries.append(leaf_entry)
+
+        parent_index_elem = node_elem.find("ParentNodeIndex")
+        # if current Node has a parent it has already been constructed and inserted in the nodes list
+        if parent_index_elem is not None:
+            parent_node = nodes[int(parent_index_elem.text)]  # find parent node
+            slot_in_parent = int(node_elem.find("SlotInParent").text)  # find the corresponding slot in parent node
+            node = Node(entries, parent_node, slot_in_parent)  # creates node and sets parent
+            parent_node.entries[slot_in_parent].set_child(node)  # sets the parent's corresponding entry's child
+        else:
+            node = Node(entries)  # only for root node
+        nodes.append(node)
+
+        Node.set_overflow_treatment_level(nodes[-1].getLevel())
+
+    return nodes
