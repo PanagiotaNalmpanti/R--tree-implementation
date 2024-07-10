@@ -45,7 +45,6 @@ class Rectangle:
         new_overlap = new_rectangle.calculate_area()
         return new_overlap - current_overlap
 
-
     def calculate_overlap_value(self, other_rectangle):
         overlap_value = 1
 

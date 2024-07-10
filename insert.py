@@ -234,14 +234,12 @@ def overflowTreatment(N, rtree, level):
 
 
 def Split(N, min_entries):
-    print("split")
     split_axis = ChooseSplitAxis(N.entries, min_entries)
     group1, group2 = ChooseSplitIndex(N.entries, split_axis, min_entries)
     return group1, group2
 
 
 def ReInsert(rtree, N):
-    print("reinsert")
     # Calculate the bounding rectangle of the node N
     points = []
     for entry in N.entries:

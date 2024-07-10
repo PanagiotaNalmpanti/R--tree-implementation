@@ -9,10 +9,13 @@ def delete(rtree, leaf):
         print("There is no such entry in the rtree")
 
     else:
+        print("Deleting", leaf.point)
         # now if the node does not have enough entries
         if len(N.entries) < Node.min_entries:
+            print("condense")
             CondenseTree(rtree, N)
         else:
+            print("adjust")
             AdjustRectangles(N)
 
 
@@ -27,6 +30,7 @@ def FindLeaf(leaf, root):
             for entry in current_node.entries:
                 if entry.record_id == leaf.record_id and entry.point == leaf.point:
                     current_node.entries.remove(entry)
+
                     return current_node
         # if it is internal node
         else:
@@ -34,6 +38,7 @@ def FindLeaf(leaf, root):
                 # check if the entry's rectangle overlaps with the point of the target entry
                 if entry.rectangle.overlaps_with_point(leaf.point):
                     nodes_to_examine.append(entry.child)
+
     return None # entry not found
 
 
@@ -161,7 +166,6 @@ def load_rtree_from_xml(file):
 
     return nodes
 
-
-rtree = load_rtree_from_xml("indexfile3000.xml")
-
-delete(rtree, LeafEntry()) # must choose a leaf entry like LeafEntry([block_id, slot, lat, lon])
+### Do not delete
+#rtree = load_rtree_from_xml("indexfile3000.xml")
+#delete(rtree, LeafEntry()) # must choose a leaf entry like LeafEntry([block_id, slot, lat, lon])
