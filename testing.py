@@ -1,5 +1,6 @@
 
 from delete import *
+
 # Define LeafEntries
 leaf_entry1 = LeafEntry([1, 0, 0, 2])
 leaf_entry2 = LeafEntry([1, 1, 1, 1])
@@ -129,9 +130,10 @@ for i, n in enumerate(rtree):
 
 print("\n")
 
-delete(rtree, LeafEntry([1, 11, -5, -6]))
-delete(rtree, LeafEntry([1, 13, -4, 8]))
-#delete(rtree, LeafEntry([1, 2, -3.0, -4.0]))
+#delete(rtree, LeafEntry([1, 11, -5, -6]))
+#delete(rtree, LeafEntry([1, 12, -3, 6]))
+#delete(rtree, LeafEntry([1, 9, -3, -5]))
+
 
 print("Tree after deletions: ")
 for i, n in enumerate(rtree):

@@ -27,17 +27,18 @@ def FindLeaf(leaf, root):
         # if it is a leaf node
         if isinstance(current_node.entries[0], LeafEntry):
             # search for the target entry
-            for entry in current_node.entries:
-                if entry.record_id == leaf.record_id and entry.point == leaf.point:
-                    current_node.entries.remove(entry)
-
+            for e in current_node.entries:
+                if e.record_id == leaf.record_id and e.point == leaf.point:
+                    current_node.entries.remove(e)
                     return current_node
+
         # if it is internal node
         else:
-            for entry in current_node.entries:
+            for e in current_node.entries:
                 # check if the entry's rectangle overlaps with the point of the target entry
-                if entry.rectangle.overlaps_with_point(leaf.point):
-                    nodes_to_examine.append(entry.child)
+                if e.rectangle.overlaps_with_point(leaf.point):
+
+                    nodes_to_examine.append(e.child)
 
     return None # entry not found
 
