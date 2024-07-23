@@ -119,19 +119,22 @@ def load_rtree_from_xml(filename):
     return nodes
 
 
+# KNN testing
+
 tree = load_rtree_from_xml("indexfile1.xml")
 
 length = len(tree[-1].entries[0].point)
 print(length)
 
 #qpoint = [0] * length
-qpoint = [3,-8]
-k = 1
+qpoint = [3, -8]
+k = 2
 
+# KNN using the R-tree
 start_time = time.time()
 k_nearest_neighbors = knn(tree[0], qpoint, k)
 end_time = time.time()
-print("\nKNN using knn algorithm in tree: ", end_time-start_time, " sec")
+print("\nKNN using R-tree algorithm: ", end_time - start_time, " sec")
 
 for distance, point, record_id in k_nearest_neighbors:
     print(f"Distance: {distance}")
@@ -139,13 +142,15 @@ for distance, point, record_id in k_nearest_neighbors:
     print(f"Point: {point}")
     print("---------------------")
 
+### There is no datafile for the indexfile1 so we have different results ###
+# KNN using linear search
 datafile = "datafile.xml"
 start_time = time.time()
-result_records = linear_search_in_datafile_KNN(qpoint, datafile, k)
+result = linear_search_in_datafile_KNN(qpoint, datafile, k)
 end_time = time.time()
-print("\nKNN using linear search in datafile: ", end_time-start_time, " sec")
+print("\nKNN using linear search in datafile: ", end_time - start_time, " sec")
 
-for list in result_records:
-    print(f"Distance: {list[1]}")
-    print(f"Point: {list[0]}")
+for point, distance in result:
+    print(f"Distance: {distance}")
+    print(f"Point: {point}")
     print("---------------------")
