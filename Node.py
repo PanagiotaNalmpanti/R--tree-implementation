@@ -1,5 +1,7 @@
 import math
 
+from Entry import LeafEntry
+
 
 class Node:
     max_entries = 4  # M
@@ -31,6 +33,11 @@ class Node:
             return self.parent.getLevel() + 1
         else:
             return 0
+
+    def is_leaf(self):
+        if not self.entries:
+            return False
+        return isinstance(self.entries[0], LeafEntry)
 
     @classmethod
     def set_max_entries(cls, number):

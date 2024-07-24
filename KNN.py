@@ -124,7 +124,7 @@ def load_rtree_from_xml(filename):
 tree = load_rtree_from_xml("indexfile1.xml")
 
 length = len(tree[-1].entries[0].point)
-print(length)
+print("Length:", length)
 
 #qpoint = [0] * length
 qpoint = [3, -8]
@@ -142,7 +142,9 @@ for distance, point, record_id in k_nearest_neighbors:
     print(f"Point: {point}")
     print("---------------------")
 
+
 ### There is no datafile for the indexfile1 so we have different results ###
+
 # KNN using linear search
 datafile = "datafile.xml"
 start_time = time.time()

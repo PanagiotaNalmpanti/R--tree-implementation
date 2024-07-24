@@ -4,6 +4,7 @@ import math
 
 block_size = 32 * 1024  # 32KB
 
+
 def createBlocks(record_data):
     block0 = (len(record_data), math.ceil(sys.getsizeof(record_data) / block_size) + 1)
     listOfRecords = []
