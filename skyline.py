@@ -38,7 +38,7 @@ def dominates(a, b):
 
 
 # used in the priority queue to process entries based on their minimum distance
-class Queueentry:
+class QEntry:
     def __init__(self, mindist, node_or_entry):
         self.mindist = mindist
         self.node_or_entry = node_or_entry
@@ -48,7 +48,7 @@ class Queueentry:
 
 
 def BBS(rtree, qpoint):
-    pq = [Queueentry(0, 0)]
+    pq = [QEntry(0, 0)]
     skyline = []
 
     while pq:
@@ -69,7 +69,7 @@ def BBS(rtree, qpoint):
                 if entry.child is not None:
                     emindist = mindist(qpoint, entry.rectangle)
                     child_index = rtree.index(entry.child)
-                    heapq.heappush(pq, Queueentry(emindist, child_index))
+                    heapq.heappush(pq, QEntry(emindist, child_index))
 
 
     return skyline

@@ -55,12 +55,12 @@ def linear_search_in_datafile_KNN(qpoint, datafile, k):
         # for every record in each block
         for record_elem in block_elem.findall("Record"):
             coordinates = record_elem.find(".//coordinates").text.split()
-            point = list(map(float, coordinates)) # Converts the list of strings to a list of floats representing the point.
+            point = list(map(float, coordinates))
             point_dist = math.sqrt(sum([(a - b) ** 2 for a, b in zip(qpoint, point)]))
-            result = [point, point_dist]
-            result.append(result)
+            result.append([point, point_dist])
 
-        return result[:k]
+    result.sort(key=lambda x: x[1])  # Sort by distance
+    return result[:k]
 
 
 def load_rtree_from_xml(filename):
@@ -121,13 +121,13 @@ def load_rtree_from_xml(filename):
 
 # KNN testing
 
-tree = load_rtree_from_xml("indexfile1.xml")
+tree = load_rtree_from_xml("indexfile.xml")
 
 length = len(tree[-1].entries[0].point)
 print("Length:", length)
 
-#qpoint = [0] * length
-qpoint = [3, -8]
+qpoint = [0] * length
+#qpoint = [3, -8]
 k = 2
 
 # KNN using the R-tree
