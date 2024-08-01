@@ -98,6 +98,24 @@ class Rectangle:
                 return False
         return True
 
+    def overlaps_with_rectangle(self, rectangle):
+        for i in range(len(self.bottom_left)):
+            if self.bottom_left[i] > rectangle.bottom_left[i] or self.top_right[i] < rectangle.top_right[i]:
+                return False
+        return True
+
+    def find_rectangle_points_for_range_query(self, root):
+        result = []
+        if not isinstance(root.entries[0], Entry):
+            for leaf_entry in root.entries:
+                if self.overlaps_with_point(leaf_entry.point):
+                    result.append(leaf_entry)
+        else:
+            for entry in root.entries:
+                if self.overlaps_with_rectangle(entry.rectangle):
+                    result.extend(self.find_rectangle_points_for_range_query(entry.child))
+        return result
+
     def to_xml(self, parent):
         rectangle_elem = ET.SubElement(parent, "Rectangle")
         bottom_left = ET.SubElement(rectangle_elem, "BottomLeft")
