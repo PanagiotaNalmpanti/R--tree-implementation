@@ -27,7 +27,7 @@ def read_blocks_from_datafile(file):
 
 def insert_one_by_one(blocks, num_of_entries):
     rtree = []
-    Node.set_overflow_treatment_level(1)
+    Node.set_overflow_treatment_level(0)
     root = Node()
     rtree.append(root)
     Node.set_max_entries(num_of_entries)

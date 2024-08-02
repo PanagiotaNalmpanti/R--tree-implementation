@@ -30,7 +30,7 @@ class Rectangle:
         sum_of_squares = sum((N_center[i] - entry_point[i]) ** 2 for i in range(len(N_center)))
         return math.sqrt(sum_of_squares)
 
-    def calculate_overlap_enlargement(self, r):
+    def calculate_overlap_enlargement(self, r, index, node):
         # create new rectangle including the points of the current rectangle and the point of the new record
         points_of_new_rectangle = [self.bottom_left, self.top_right]
 

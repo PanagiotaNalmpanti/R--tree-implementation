@@ -91,7 +91,7 @@ save_rtree_to_xml(rtree, "indexfile1.xml")
 # insert_to_tree(rtree, LeafEntry([1, 60, -6, -2]))
 # insert_to_tree(rtree, LeafEntry([1, 70, -8, -2]))
 # insert_to_tree(rtree, LeafEntry([1, 80, -9, -3]))
-#
+# #
 # insert_to_tree(rtree, LeafEntry([1, 90, -4, -4]))
 # insert_to_tree(rtree, LeafEntry([1, 90, -7, 1]))
 # insert_to_tree(rtree, LeafEntry([1, 90, -6.5, -6]))  # must split here
@@ -112,36 +112,36 @@ for i, n in enumerate(rtree):
 
 ### Delete testing
 
-#tree = load_tree_from_xml("indexfile2.xml")
+#tree = load_tree_from_xml("indexfile1.xml")
 print("max entries = ", Node.max_entries)
 print("min entries = ", Node.min_entries)
 
 print("\n")
 
-print("Tree before deletions: ")
-for i, n in enumerate(rtree):
-    print("node ", i, "level ", n.getLevel())
-    if isinstance(n.entries[0], LeafEntry):
-        for j, entry in enumerate(n.entries):
-            print("     leaf_entry ", j, ": ", entry.point)
-    else:
-        for j, entry in enumerate(n.entries):
-            print("     entry ", j, ": ", entry.rectangle.bottom_left, " ", entry.rectangle.top_right)
-
-print("\n")
+# print("Tree before deletions: ")
+# for i, n in enumerate(rtree):
+#     print("node ", i, "level ", n.getLevel())
+#     if isinstance(n.entries[0], LeafEntry):
+#         for j, entry in enumerate(n.entries):
+#             print("     leaf_entry ", j, ": ", entry.point)
+#     else:
+#         for j, entry in enumerate(n.entries):
+#             print("     entry ", j, ": ", entry.rectangle.bottom_left, " ", entry.rectangle.top_right)
+#
+# print("\n")
 
 #delete(rtree, LeafEntry([1, 11, -5, -6]))
 #delete(rtree, LeafEntry([1, 12, -3, 6]))
 #delete(rtree, LeafEntry([1, 9, -3, -5]))
 
 
-print("Tree after deletions: ")
-for i, n in enumerate(rtree):
-    print("node ", i, "level ", n.getLevel())
-    if isinstance(n.entries[0], LeafEntry):
-        for j, entry in enumerate(n.entries):
-            print("     leaf_entry ", j, ": ", entry.point)
-    else:
-        for j, entry in enumerate(n.entries):
-            print("     entry ", j, ": ", entry.rectangle.bottom_left, " ", entry.rectangle.top_right)
+# print("Tree after deletions: ")
+# for i, n in enumerate(rtree):
+#     print("node ", i, "level ", n.getLevel())
+#     if isinstance(n.entries[0], LeafEntry):
+#         for j, entry in enumerate(n.entries):
+#             print("     leaf_entry ", j, ": ", entry.point)
+#     else:
+#         for j, entry in enumerate(n.entries):
+#             print("     entry ", j, ": ", entry.rectangle.bottom_left, " ", entry.rectangle.top_right)
 
