@@ -94,7 +94,7 @@ class Rectangle:
     # needed to search for the target entry to delete
     def overlaps_with_point(self, point):
         for i in range(len(self.bottom_left)):
-            if not(self.bottom_left[i] <= point[i] <= self.top_right[i]):
+            if not (self.bottom_left[i] <= point[i] <= self.top_right[i]):
                 return False
         return True
 
@@ -103,7 +103,6 @@ class Rectangle:
             if self.bottom_left[i] > rectangle.bottom_left[i] or self.top_right[i] < rectangle.top_right[i]:
                 return False
         return True
-
 
     def to_xml(self, parent):
         rectangle_elem = ET.SubElement(parent, "Rectangle")
