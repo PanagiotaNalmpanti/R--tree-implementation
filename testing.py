@@ -130,9 +130,9 @@ print("\n")
 #
 # print("\n")
 
-#delete(rtree, LeafEntry([1, 11, -5, -6]))
-#delete(rtree, LeafEntry([1, 12, -3, 6]))
-#delete(rtree, LeafEntry([1, 9, -3, -5]))
+delete(rtree, LeafEntry([1, 11, -5, -6]))
+delete(rtree, LeafEntry([1, 12, -3, 6]))
+delete(rtree, LeafEntry([1, 9, -3, -5]))
 
 
 # print("Tree after deletions: ")
