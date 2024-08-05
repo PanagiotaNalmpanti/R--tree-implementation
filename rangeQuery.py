@@ -32,7 +32,7 @@ def linear_search_in_datafile_RQ(file, rectangle):
             if rectangle.overlaps_with_point(point):
                 record_id = int(record.find(".//id").text)
                 name = record.find(".//name").text
-                result.append([record_id, name, point])
+                result.append([record_id, name, *point])
     return result
 
 

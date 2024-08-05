@@ -54,3 +54,9 @@ class Node:
 
     def set_entries(self, entries):
         self.entries = entries
+
+    def find_node_level(self):
+        if self.parent is not None:
+            return self.parent.find_node_level() + 1
+        else:
+            return 0
