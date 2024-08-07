@@ -423,7 +423,7 @@ def ChooseSplitIndex(entries, split_axis, min_entries):
     return entries[:index], entries[index:]
 
 ##<DONT DELETE>
-# read the records from datafile
+# # read the records from datafile
 # read_blocks = read_blocks_from_datafile("datafile3000.xml")  # testing
 # start_time = time.time()
 # rtree = insert_one_by_one(read_blocks, Node.max_entries)
