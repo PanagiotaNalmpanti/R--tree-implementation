@@ -100,7 +100,7 @@ class Rectangle:
 
     def overlaps_with_rectangle(self, rectangle):
         for i in range(len(self.bottom_left)):
-            if self.bottom_left[i] > rectangle.bottom_left[i] or self.top_right[i] < rectangle.top_right[i]:
+            if self.bottom_left[i] > rectangle.top_right[i] or self.top_right[i] < rectangle.bottom_left[i]:
                 return False
         return True
 

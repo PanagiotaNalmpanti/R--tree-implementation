@@ -5,20 +5,20 @@ from Node import Node
 
 
 def find_rectangle_points_for_range_query(rec, root):
-        result = []
-        if isinstance(root.entries[0], Entry):
-            for entry in root.entries:
-                if rec.overlaps_with_rectangle(entry.rectangle):
-                    result.extend(find_rectangle_points_for_range_query(rec, entry.child))
-        else:
-            for leaf_entry in root.entries:
-                if rec.overlaps_with_point(leaf_entry.point):
-                    result.append(leaf_entry)
-        return result
+    points = []
+    if isinstance(root.entries[0], Entry):
+        for entry in root.entries:
+            if rec.overlaps_with_rectangle(entry.rectangle):
+                points.extend(find_rectangle_points_for_range_query(rec, entry.child))
+    else:
+        for leaf_entry in root.entries:
+            if rec.overlaps_with_point(leaf_entry.point):
+                points.append(leaf_entry)
+    return points
 
 
 def linear_search_in_datafile_RQ(file, rectangle):
-    result = []
+    points = []
     tree = ET.parse(file)
     root = tree.getroot()
 
@@ -32,8 +32,8 @@ def linear_search_in_datafile_RQ(file, rectangle):
             if rectangle.overlaps_with_point(point):
                 record_id = int(record.find(".//id").text)
                 name = record.find(".//name").text
-                result.append([record_id, name, *point])
-    return result
+                points.append([record_id, name, *point])
+    return points
 
 
 def load_rtree_from_xml(filename):
@@ -97,13 +97,20 @@ rectangle = Rectangle([[41.3672855, 26.158758], [41.6101905, 26.6318299]])  # ra
 
 # range query using R-tree
 start_time = time.time()
-result = find_rectangle_points_for_range_query(rectangle, tree[0])
+points = find_rectangle_points_for_range_query(rectangle, tree[0])
 end_time = time.time()
 print("Range Query using R-tree algorithm: ", end_time - start_time, " sec")
+# print("Points in rectangle of interest:")
+# for i, e in enumerate(points):
+#     print("Point ", i+1, ": ", e.point)
+# print("\n")
 
 # range query using linear search
 datafile = "datafile.xml"
 start_time = time.time()
-result = linear_search_in_datafile_RQ(datafile, rectangle)
+points = linear_search_in_datafile_RQ(datafile, rectangle)
 end_time = time.time()
 print("Range query using linear search algorithm: ", end_time - start_time, " sec")
+# print("Points in rectangle of interest:")
+# for i, e in enumerate(points):
+#     print("Point ", i+1, ": ", e[2:])

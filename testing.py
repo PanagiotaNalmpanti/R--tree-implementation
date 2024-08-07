@@ -1,5 +1,5 @@
-
 from delete import *
+from rangeQuery import *
 
 # Define LeafEntries
 leaf_entry1 = LeafEntry([1, 0, 0, 2])
@@ -96,27 +96,27 @@ save_rtree_to_xml(rtree, "indexfile1.xml")
 # insert_to_tree(rtree, LeafEntry([1, 90, -7, 1]))
 # insert_to_tree(rtree, LeafEntry([1, 90, -6.5, -6]))  # must split here
 
-save_rtree_to_xml(rtree, "indexfile1.xml")
+#save_rtree_to_xml(rtree, "indexfile1.xml")     # comment
 
-# print rtree
-print("max entries = ", Node.max_entries)
-for i, n in enumerate(rtree):
-    print("node ", i, "level ", n.getLevel())
-    if isinstance(n.entries[0], LeafEntry):
-        for j, entry in enumerate(n.entries):
-            print("     leaf_entry ", j, ": ", entry.point)
-    else:
-        for j, entry in enumerate(n.entries):
-            print("     entry ", j, ": ", entry.rectangle.bottom_left, " ", entry.rectangle.top_right)
-
+# # print rtree
+# print("max entries = ", Node.max_entries)
+# print(rtree)
+# for i, n in enumerate(rtree):
+#     print("node ", i, "level ", n.getLevel())
+#     if isinstance(n.entries[0], LeafEntry):
+#         for j, entry in enumerate(n.entries):
+#             print("     leaf_entry ", j, ": ", entry.point)
+#     else:
+#         for j, entry in enumerate(n.entries):
+#             print("     entry ", j, ": ", entry.rectangle.bottom_left, " ", entry.rectangle.top_right)
 
 ### Delete testing
 
-#tree = load_tree_from_xml("indexfile1.xml")
-print("max entries = ", Node.max_entries)
-print("min entries = ", Node.min_entries)
-
-print("\n")
+# tree = load_tree_from_xml("indexfile1.xml")
+# print("max entries = ", Node.max_entries)
+# print("min entries = ", Node.min_entries)
+#
+# print("\n")
 
 # print("Tree before deletions: ")
 # for i, n in enumerate(rtree):
@@ -130,10 +130,9 @@ print("\n")
 #
 # print("\n")
 
-delete(rtree, LeafEntry([1, 11, -5, -6]))
-delete(rtree, LeafEntry([1, 12, -3, 6]))
-delete(rtree, LeafEntry([1, 9, -3, -5]))
-
+#delete(rtree, LeafEntry([1, 11, -5, -6]))
+#delete(rtree, LeafEntry([1, 12, -3, 6]))
+#delete(rtree, LeafEntry([1, 9, -3, -5]))
 
 # print("Tree after deletions: ")
 # for i, n in enumerate(rtree):
@@ -145,3 +144,10 @@ delete(rtree, LeafEntry([1, 9, -3, -5]))
 #         for j, entry in enumerate(n.entries):
 #             print("     entry ", j, ": ", entry.rectangle.bottom_left, " ", entry.rectangle.top_right)
 
+### Range Query testing
+
+query_rectangle = Rectangle([[-6, -8], [1, -6], [-4, 0], [1, 0]])
+points = find_rectangle_points_for_range_query(query_rectangle, rtree[0])
+print("Points in rectangle of interest:")
+for i, e in enumerate(points):
+    print("Point ", i+1, ": ", e.point)
