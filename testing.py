@@ -3,7 +3,7 @@ from rangeQuery import *
 
 # Define LeafEntries
 leaf_entry1 = LeafEntry([1, 0, 0, 2])
-leaf_entry2 = LeafEntry([1, 1, 1, 1])
+leaf_entry2 = LeafEntry([1, 1, 1, -1])
 leaf_entry3 = LeafEntry([1, 2, -1, -2])
 
 leaf_entry4 = LeafEntry([1, 3, 0, -5])
@@ -146,7 +146,7 @@ save_rtree_to_xml(rtree, "indexfile1.xml")
 
 ### Range Query testing
 
-query_rectangle = Rectangle([[-6, -8], [1, -6], [-4, 0], [1, 0]])
+query_rectangle = Rectangle([[-6, -8], [1, -8], [-6, 0], [1, -8]])
 points = find_rectangle_points_for_range_query(query_rectangle, rtree[0])
 print("Points in rectangle of interest:")
 for i, e in enumerate(points):
