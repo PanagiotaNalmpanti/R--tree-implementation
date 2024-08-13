@@ -5,37 +5,27 @@ from insert import insert_to_tree
 import time
 
 
-def read_all_blocks_from_datafile(filename):
-    tree = ET.parse(filename)
+def read_blocks_from_datafile(file):
+    tree = ET.parse(file)
     root = tree.getroot()
-
-    block0 = root.find(".//Block[@id='" + str(0) + "']")
     blocks = []
-    num_of_blocks = int(block0.find(".//number_of_blocks").text)
-    for block_id in range(1, num_of_blocks):
-        block_data = block_data_from_datafile(block_id, filename)
-        blocks.append(block_data)
+    number_of_blocks = int(root.find('Block').find('number_of_blocks').text)
+
+    for id in range(1, number_of_blocks):
+        block_id = id
+        block_records = []
+
+        # Iterate through records within the block
+        for record in root.find(f"Block[@id='{id}']").findall('Record'):
+            slot = int(record.attrib['id'])
+
+            coordinates_text = record.find('coordinates').text
+            coordinates = coordinates_text.split()
+
+            block_records.append([block_id, slot] + [float(coord) for coord in coordinates])
+        blocks.append(block_records)
     Node.set_max_entries(len(blocks[0]))
     return blocks
-
-
-def block_data_from_datafile(block_id, filename):
-    tree = ET.parse(filename)
-    root = tree.getroot()
-
-    block_to_read = root.find(".//Block[@id='" + str(block_id) + "']")
-    if block_to_read is None:
-        return []
-
-    records = []
-    for record_elem in block_to_read.findall(".//Record"):
-        block_id = int(block_to_read.get("id"))
-        slot = int(record_elem.get("id"))
-        coordinates = record_elem.find(".//coordinates").text.split()
-        coordinates_float = list(map(float, coordinates))
-        records.append([block_id, slot, *coordinates_float])
-
-    return records
 
 
 def z_order_method(coordinates):
@@ -219,12 +209,12 @@ def save_to_xml(tree, file):
     xml_tree.write(file, encoding="utf-8", xml_declaration=True)
 
 
-blocks_from_file = read_all_blocks_from_datafile("datafile3000.xml")
+blocks_from_file = read_blocks_from_datafile("datafile.xml")
 start_time = time.time()
 rtree = bulk_loading(blocks_from_file)
 end_time = time.time()
 
-print("Build the rtree by inserting the records one by one: ", end_time - start_time, " sec")
+print("Build the rtree by inserting the records bottom up: ", end_time - start_time, " sec")
 print("The tree has ", len(rtree), " nodes: ")
 for i, node in enumerate(rtree):
     print("node", i, "level=", node.getLevel(), "num of entries = ", len(node.entries))
