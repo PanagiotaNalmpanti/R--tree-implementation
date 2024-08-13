@@ -122,7 +122,7 @@ def bulk_loading(blocks_from_file):
         tree = [root]
         for node in leaf_nodes:
             tree.append(node)
-        overflow_treatment_level = tree[-1].find_node_level()
+
         Node.set_max_entries(max_entries)
         for leaf_entry in entries_left:
             insert_to_tree(tree, leaf_entry)
@@ -176,7 +176,6 @@ def bulk_loading(blocks_from_file):
     # constructing the final tree : [root + internal nodes + leaf nodes]
     tree = [root] + [node for node in upper_level_internal_nodes if node != root] + leaf_nodes
 
-    overflow_treatment_level = tree[-1].find_node_level()
     Node.set_max_entries(max_entries)
 
     # insert the leaf entries (records) that are left from the node that was not inserted in the tree
@@ -226,4 +225,4 @@ for i, node in enumerate(rtree):
 
 print("\n")
 
-save_to_xml(rtree, "indexfile3000.xml")
+save_to_xml(rtree, "indexfile.xml")
