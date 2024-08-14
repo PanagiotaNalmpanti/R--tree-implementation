@@ -52,8 +52,8 @@ class Node:
     def increase_overflow_treatment_level(cls):
         cls.overflow_treatment_level += 1
 
-    def set_entries(self, entries):
-        self.entries = entries
+    # def set_entries(self, entries):
+    #     self.entries = entries
 
     def find_node_level(self):
         if self.parent is not None:
