@@ -26,8 +26,6 @@ def createBlocks(record_data):
 
     block0 = (len(record_data), len(listOfBlocks))
     listOfBlocks[0] = block0
-    # print(block0)
-    # print(len(listOfBlocks[1]))
 
     return listOfBlocks
 
@@ -46,12 +44,13 @@ def create_xml(blocks, records, xml):
                 recordEl = ET.SubElement(blockEl, "Record", id=str(j))
                 ET.SubElement(recordEl, "id").text = str(record[0])
                 ET.SubElement(recordEl, "name").text = str(record[1])
-                ET.SubElement(recordEl, "coordinates").text = " ".join(map(str, record[2:])) # map: Applies str in each element of the record[2:] = coordinates
+                # map: Applies str in each element of the record[2:] = coordinates
+                ET.SubElement(recordEl, "coordinates").text = " ".join(map(str, record[2:]))
 
     tree = ET.ElementTree(Blocks)
 
     # write the tree into an XML file
-    tree.write("datafile3000.xml", encoding='utf-8', xml_declaration=True)
+    tree.write(xml, encoding='utf-8', xml_declaration=True)
 
 
 # parse the .osm XML file
@@ -61,24 +60,18 @@ root = tree.getroot()
 # list to store the points only (node data)
 record_data = []
 tags = {}  # dictionary
-count = 0 # for testing only
 for element in root:
     if element.tag == "node":
-        if count<3000: # for testing only
-            count +=1 # for testing only
-            id = element.attrib["id"]
-            lat = element.attrib["lat"]
-            lon = element.attrib["lon"]
-            for tag in element.findall("tag"):
-                tags[tag.attrib["k"]] = tag.attrib["v"]
-            name = tags.get("name", "unknown")
+        id = element.attrib["id"]
+        lat = element.attrib["lat"]
+        lon = element.attrib["lon"]
+        for tag in element.findall("tag"):
+            tags[tag.attrib["k"]] = tag.attrib["v"]
+        name = tags.get("name", "unknown")
 
-            # coordinates = (lat,lon)
-            record_data.append([id, name, lat, lon]) # here you can add more dimensions
-
-        else: # for testing only
-            break # for testing only
+        # coordinates = (lat,lon)
+        record_data.append([id, name, lat, lon])  # here you can add more dimensions
 
 # print(record_data)
 listOfBlocks = createBlocks(record_data)
-create_xml(listOfBlocks, len(record_data), "datafile3000.xml")
+create_xml(listOfBlocks, len(record_data), "datafile.xml")
