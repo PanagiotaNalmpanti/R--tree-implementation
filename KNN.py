@@ -127,7 +127,7 @@ length = len(tree[-1].entries[0].point)
 print("Length:", length)
 
 qpoint = [0] * length
-#qpoint = [3, -8]
+# qpoint = [3, -8] testing for indexfile1.xml
 k = 2
 
 # KNN using the R-tree

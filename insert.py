@@ -422,26 +422,25 @@ def ChooseSplitIndex(entries, split_axis, min_entries):
 
     return entries[:index], entries[index:]
 
-##<DONT DELETE>
-# # read the records from datafile
-# read_blocks = read_blocks_from_datafile("datafile3000.xml")  # testing
-# start_time = time.time()
-# rtree = insert_one_by_one(read_blocks, Node.max_entries)
-# end_time = time.time()
-#
-# print("Build the rtree by inserting the records one by one: ", end_time - start_time, " sec")
-# print("The tree has ", len(rtree), " nodes: ")
-# for i, node in enumerate(rtree):
-#     print("node", i, "level=", node.getLevel(), "num of entries = ", len(node.entries))
-#     for j, entry in enumerate(node.entries):
-#         if isinstance(entry, LeafEntry):
-#             print("       leaf_entry", j, ":", entry.record_id, entry.point)
-#         else:
-#             print("       entry", j, ":", entry.rectangle.bottom_left, " ", entry.rectangle.top_right)
-#
-# print("\n")
-#
-# # save the tree to the indexfile
-# save_rtree_to_xml(rtree, "indexfile3000.xml")  # testing
 
-##<DONT DELETE/>
+# read the records from datafile
+read_blocks = read_blocks_from_datafile("datafile.xml")
+start_time = time.time()
+rtree = insert_one_by_one(read_blocks, Node.max_entries)
+end_time = time.time()
+
+print("Build the rtree by inserting the records one by one: ", end_time - start_time, " sec")
+print("The tree has ", len(rtree), " nodes: ")
+for i, node in enumerate(rtree):
+    print("node", i, "level=", node.getLevel(), "num of entries = ", len(node.entries))
+    for j, entry in enumerate(node.entries):
+        if isinstance(entry, LeafEntry):
+            print("       leaf_entry", j, ":", entry.record_id, entry.point)
+        else:
+            print("       entry", j, ":", entry.rectangle.bottom_left, " ", entry.rectangle.top_right)
+
+print("\n")
+
+# save the tree to the indexfile
+save_rtree_to_xml(rtree, "indexfile.xml")  # testing
+

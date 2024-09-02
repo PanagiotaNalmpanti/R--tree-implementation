@@ -40,7 +40,7 @@ def FindLeaf(leaf, root):
 
                     nodes_to_examine.append(e.child)
 
-    return None # entry not found
+    return None  # entry not found
 
 
 def CondenseTree(rtree, N):
@@ -167,6 +167,6 @@ def load_rtree_from_xml(file):
 
     return nodes
 
-### Do not delete
-#rtree = load_rtree_from_xml("indexfile3000.xml")
-#delete(rtree, LeafEntry()) # must choose a leaf entry like LeafEntry([block_id, slot, lat, lon])
+# ### example
+# rtree = load_rtree_from_xml("indexfile.xml")
+# delete(rtree, LeafEntry([9,56,41.4867382,26.158758])) # must choose a leaf entry like LeafEntry([block_id, slot, lat, lon])

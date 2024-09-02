@@ -71,7 +71,6 @@ def BBS(rtree, qpoint):
                     child_index = rtree.index(entry.child)
                     heapq.heappush(pq, QEntry(emindist, child_index))
 
-
     return skyline
 
 
